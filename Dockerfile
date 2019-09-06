@@ -10,9 +10,9 @@ ARG LIBSLZ_VERSION=1.1.0
 # No md5 for libslz yet -- the tarball is dynamically
 # generated and it differs every time.
 
-ARG HAPROXY_MAJOR=1.8
-ARG HAPROXY_VERSION=1.8.9
-ARG HAPROXY_MD5=1466cf8c1c036e376265b86df43efc89
+ARG HAPROXY_MAJOR=2.0
+ARG HAPROXY_VERSION=2.0.5
+ARG HAPROXY_MD5=497c716adf4b056484601a887f34d152
 
 
 ### Runtime -- the base image for all others
@@ -55,7 +55,7 @@ FROM builder as pcre2
 ARG PCRE2_VERSION
 ARG PCRE2_SHA256
 
-RUN curl -OJ "ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
+RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
@@ -94,10 +94,11 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
     echo "${HAPROXY_MD5} haproxy-${HAPROXY_VERSION}.tar.gz" | md5sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
     make -C haproxy-${HAPROXY_VERSION} \
-      TARGET=linux2628 \
+      TARGET=linux-glibc \
       USE_SLZ=1 SLZ_INC=../libslz/src SLZ_LIB=../libslz \
       USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
       USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
+      EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o" \
       DESTDIR=/tmp/haproxy PREFIX= \
       all \
       install-bin && \
