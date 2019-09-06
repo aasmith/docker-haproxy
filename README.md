@@ -12,8 +12,12 @@ For a complete list of docker tags you can use, see: https://hub.docker.com/r/aa
 
 ### Branches
 
-[1.6](https://github.com/aasmith/docker-haproxy/tree/1.6) | [1.7](https://github.com/aasmith/docker-haproxy/tree/1.7) | [1.8](https://github.com/aasmith/docker-haproxy/tree/1.8) | [lua](https://github.com/aasmith/docker-haproxy/tree/lua) | [lua-1.6](https://github.com/aasmith/docker-haproxy/tree/lua-1.6) | [lua-1.7](https://github.com/aasmith/docker-haproxy/tree/lua-1.7)
---- | --- | --- | --- | --- | ---
+[2.0](https://github.com/aasmith/docker-haproxy/tree/2.0) |
+[1.9](https://github.com/aasmith/docker-haproxy/tree/1.9) |
+[1.8](https://github.com/aasmith/docker-haproxy/tree/1.8) |
+[1.7](https://github.com/aasmith/docker-haproxy/tree/1.7) |
+[1.6](https://github.com/aasmith/docker-haproxy/tree/1.6) |
+--- | --- | --- | --- | ---
 
 ## Usage
 
@@ -33,23 +37,6 @@ FROM aasmith/haproxy:1.8 # stay on the latest the 1.8 line
 ```
 FROM aasmith/haproxy:1.8.0 # use exactly 1.8.0
 ```
-
-### Lua
-
-A lua version is also available on the `lua` branch:
-
-```
-FROM aasmith/haproxy:lua # latest lua
-```
-
-```
-FROM aasmith/haproxy:lua-1.6.10
-```
-
-The lua version also includes the luarocks package manager.
-
-For more information about using these images, see the offical docker image
-instructions at https://github.com/docker-library/docs/tree/master/haproxy#how-to-use-this-image.
 
 ## Libraries
 
@@ -74,37 +61,42 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 
 [2]: http://1wt.eu/projects/libslz/
 
+### Prometheus
+
+[Prometheus exporter functionality](http://git.haproxy.org/?p=haproxy-2.0.git;a=blob_plain;f=contrib/prometheus-exporter/README;hb=HEAD) is compiled in by default from version 2.0.5 onwards.
+
 ## Compilation Details
 
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 1.8.1 2017/12/03
-Copyright 2000-2017 Willy Tarreau <willy@haproxy.org>
-
+HA-Proxy version 2.0.5 2019/08/16 - https://haproxy.org/
 Build options :
-  TARGET  = linux2628
+  TARGET  = linux-glibc
   CPU     = generic
   CC      = gcc
-  CFLAGS  = -O2 -g -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-null-dereference -Wno-unused-label
-  OPTIONS = USE_SLZ=1 USE_OPENSSL=1 USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1
+  CFLAGS  = -O2 -g -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference
+  OPTIONS = USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 USE_OPENSSL=1 USE_SLZ=1
+
+Feature list : +EPOLL -KQUEUE -MY_EPOLL -MY_SPLICE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED -REGPARM -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H -VSYSCALL +GETADDRINFO +OPENSSL -LUA +FUTEX +ACCEPT4 -MY_ACCEPT4 -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
 
 Default settings :
-  maxconn = 2000, bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
+  bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
 
-Built with OpenSSL version : OpenSSL 1.1.0g  2 Nov 2017
-Running on OpenSSL version : OpenSSL 1.1.0g  2 Nov 2017
+Built with multi-threading support (MAX_THREADS=64, default=2).
+Built with OpenSSL version : OpenSSL 1.1.0h  27 Mar 2018
+Running on OpenSSL version : OpenSSL 1.1.0h  27 Mar 2018
 OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
 OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2
+Built with network namespace support.
 Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
-Encrypted password support via crypt(3): yes
-Built with multi-threading support.
-Built with PCRE2 version : 10.30 2017-08-14
-PCRE2 library supports JIT : yes
 Built with libslz for stateless compression.
 Compression algorithms supported : identity("identity"), deflate("deflate"), raw-deflate("deflate"), gzip("gzip")
-Built with network namespace support.
+Built with PCRE2 version : 10.31 2018-02-12
+PCRE2 library supports JIT : yes
+Encrypted password support via crypt(3): yes
+Built with the Prometheus exporter as a service
 
 Available polling systems :
       epoll : pref=300,  test result OK
@@ -112,8 +104,20 @@ Available polling systems :
      select : pref=150,  test result OK
 Total: 3 (3 usable), will use epoll.
 
+Available multiplexer protocols :
+(protocols marked as <default> cannot be specified using 'proto' keyword)
+              h2 : mode=HTX        side=FE|BE     mux=H2
+              h2 : mode=HTTP       side=FE        mux=H2
+       <default> : mode=HTX        side=FE|BE     mux=H1
+       <default> : mode=TCP|HTTP   side=FE|BE     mux=PASS
+
+Available services :
+	prometheus-exporter
+
 Available filters :
 	[SPOE] spoe
 	[COMP] compression
+	[CACHE] cache
 	[TRACE] trace
+
 ```
