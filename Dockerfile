@@ -1,4 +1,4 @@
-ARG OS=debian:stretch-slim
+ARG OS=debian:buster-slim
 
 ARG OPENSSL_VERSION=1.1.0k
 ARG OPENSSL_SHA256=efa4965f4f773574d6cbda1cf874dbbe455ab1c0d4f906115f867d30444470b1
@@ -28,7 +28,7 @@ RUN apt-get update && \
 FROM runtime as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y gcc make file libc-dev perl libtext-template-perl
+    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl
 
 
 ### OpenSSL
