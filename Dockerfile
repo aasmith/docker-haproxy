@@ -1,69 +1,87 @@
-FROM debian:jessie
+ARG OS=debian:stretch-slim
 
-ENV HAPROXY_MAJOR 1.7
-ENV HAPROXY_VERSION 1.7.6
-ENV HAPROXY_MD5 8f4328cf66137f0dbf6901e065f603cc
+ARG OPENSSL_VERSION=1.1.0h
+ARG OPENSSL_SHA256=5835626cde9e99656585fc7aaa2302a73a7e1340bf8c14fd635a62c66802a517
 
-ENV LIBSLZ_VERSION 1.1.0
+ARG PCRE2_VERSION=10.31
+ARG PCRE2_SHA256=e11ebd99dd23a7bccc9127d95d9978101b5f3cf0a6e7d25a1b1ca165a97166c4
+
+ARG LIBSLZ_VERSION=1.1.0
 # No md5 for libslz yet -- the tarball is dynamically
 # generated and it differs every time.
 
-ENV PCRE_VERSION 8.40
-ENV PCRE_MD5 890c808122bd90f398e6bc40ec862102
-
-ENV LIBRESSL_VERSION 2.4.5
-ENV LIBRESSL_MD5 c4bd1779a79929bbeb59121449d142c3
+ARG HAPROXY_MAJOR=2.0
+ARG HAPROXY_VERSION=2.0.5
+ARG HAPROXY_MD5=497c716adf4b056484601a887f34d152
 
 ENV LUA_VERSION=5.3.4
 ENV LUA_MD5=53a9c68bcc0eda58bdc2095ad5cdfc63
 
-ENV LUAROCKS_VERSION=2.4.2
-ENV LUAROCKS_MD5=32f30478d6bb3594aff9b59ebe591bbd
+### Runtime -- the base image for all others
 
-RUN buildDeps='make file libc-dev libreadline-dev' \
-    set -x && \
-    apt-get update && \
-    apt-get install --no-install-recommends -y ${buildDeps} && \
+FROM $OS as runtime
 
-    # binaries that lunarocks needs to operate
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y curl ca-certificates
 
-    apt-get install --no-install-recommends -y gcc unzip curl && \
 
-    # SLZ
+### Builder -- adds common utils needed for all build images
 
-    curl -OJ "http://git.1wt.eu/web?p=libslz.git;a=snapshot;h=v${LIBSLZ_VERSION};sf=tgz" && \
-    tar zxvf libslz-v${LIBSLZ_VERSION}.tar.gz && \
-    make -C libslz static && \
+FROM runtime as builder
 
-    # PCRE
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y gcc make file libc-dev perl libtext-template-perl
 
-    curl -OJ "ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-${PCRE_VERSION}.tar.gz" && \
-    echo ${PCRE_MD5} pcre-${PCRE_VERSION}.tar.gz | md5sum -c && \
-    tar zxvf pcre-${PCRE_VERSION}.tar.gz && \
-    cd pcre-${PCRE_VERSION} && \
 
-    CPPFLAGS="-D_FORTIFY_SOURCE=2" \
+### OpenSSL
+
+FROM builder as ssl
+
+ARG OPENSSL_VERSION
+ARG OPENSSL_SHA256
+
+RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
+    echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
+    tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
+    cd openssl-${OPENSSL_VERSION} && \
+    ./config no-shared --prefix=/tmp/openssl && \
+    make && \
+    make TESTS='-40' test && \
+    make install_sw
+
+
+### PCRE2
+
+FROM builder as pcre2
+
+ARG PCRE2_VERSION
+ARG PCRE2_SHA256
+
+RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
+    echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
+    tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
+    cd pcre2-${PCRE2_VERSION} && \
+
     LDFLAGS="-fPIE -pie -Wl,-z,relro -Wl,-z,now" \
     CFLAGS="-pthread -g -O2 -fPIE -fstack-protector-strong -Wformat -Werror=format-security -Wall -fvisibility=hidden" \
-    ./configure --prefix=/tmp/pcre --disable-shared --enable-utf8 --enable-jit --enable-unicode-properties --disable-cpp && \
-    make install && \
-    ./pcre_jit_test && \
-    cd .. && \
-
-    # LibreSSL
-
-    curl -OJ http://ftp.openbsd.org/pub/OpenBSD/LibreSSL/libressl-${LIBRESSL_VERSION}.tar.gz && \
-    echo ${LIBRESSL_MD5} libressl-${LIBRESSL_VERSION}.tar.gz | md5sum -c && \
-    tar zxvf libressl-${LIBRESSL_VERSION}.tar.gz && \
-    cd libressl-${LIBRESSL_VERSION} && \
-    ./configure --disable-shared --prefix=/tmp/libressl && \
+    ./configure --prefix=/tmp/pcre2 --disable-shared --enable-utf8 --enable-jit --enable-unicode-properties --disable-cpp && \
     make check && \
-    make install && \
-    cd .. && \
+    make install
 
-    # Lua
 
-    curl -OJ http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz && \
+### libslz
+
+FROM builder as slz
+
+ARG LIBSLZ_VERSION
+
+RUN curl -OJ "http://git.1wt.eu/web?p=libslz.git;a=snapshot;h=v${LIBSLZ_VERSION};sf=tgz" && \
+    tar zxvf libslz-v${LIBSLZ_VERSION}.tar.gz && \
+    make -C libslz static
+
+# Lua
+
+RUN curl -OJ http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz && \
     echo ${LUA_MD5} lua-${LUA_VERSION}.tar.gz | md5sum -c && \
     tar zxf lua-${LUA_VERSION}.tar.gz && \
     cd lua-${LUA_VERSION} && \
@@ -71,35 +89,41 @@ RUN buildDeps='make file libc-dev libreadline-dev' \
     make install && \
     cd .. && \
 
-    # Lua package manager
+### HAProxy
 
-    curl -OJL http://luarocks.org/releases/luarocks-${LUAROCKS_VERSION}.tar.gz && \
-    echo ${LUAROCKS_MD5} luarocks-${LUAROCKS_VERSION}.tar.gz | md5sum -c && \
-    tar zxvf luarocks-${LUAROCKS_VERSION}.tar.gz && \
-    cd luarocks-${LUAROCKS_VERSION} && \
-    ./configure && \
-    make bootstrap && \
-    cd .. && \
+FROM builder as haproxy
 
-    # HAProxy
+COPY --from=ssl   /tmp/openssl /tmp/openssl
+COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
+COPY --from=slz   /libslz      /libslz
 
-    curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
+ARG HAPROXY_MAJOR
+ARG HAPROXY_VERSION
+ARG HAPROXY_MD5
+
+RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
     echo "${HAPROXY_MD5} haproxy-${HAPROXY_VERSION}.tar.gz" | md5sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
     make -C haproxy-${HAPROXY_VERSION} \
-      TARGET=linux2628 \
+      TARGET=linux-glibc \
       USE_SLZ=1 SLZ_INC=../libslz/src SLZ_LIB=../libslz \
-      USE_STATIC_PCRE=1 USE_PCRE_JIT=1 PCREDIR=/tmp/pcre \
-      USE_OPENSSL=1 SSL_INC=/tmp/libressl/include SSL_LIB=/tmp/libressl/lib \
+      USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
+      USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
       USE_LUA=1 \
+      EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o" \
+      DESTDIR=/tmp/haproxy PREFIX= \
       all \
       install-bin && \
-    mkdir -p /usr/local/etc/haproxy && \
-    cp -R haproxy-${HAPROXY_VERSION}/examples/errorfiles /usr/local/etc/haproxy/errors && \
+    mkdir -p /tmp/haproxy/etc/haproxy && \
+    cp -R haproxy-${HAPROXY_VERSION}/examples/errorfiles /tmp/haproxy/etc/haproxy/errors
 
-    # Clean up
-    rm -rf /var/lib/apt/lists/* /tmp/* haproxy* pcre* libressl* libslz* && \
-    apt-get purge -y --auto-remove ${buildDeps}
 
+### HAProxy runtime image
+
+FROM runtime
+
+COPY --from=haproxy /tmp/haproxy /usr/local/
+
+RUN rm -rf /var/lib/apt/lists/*
 
 CMD ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
