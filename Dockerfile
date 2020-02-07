@@ -14,8 +14,8 @@ ARG HAPROXY_MAJOR=2.0
 ARG HAPROXY_VERSION=2.0.5
 ARG HAPROXY_MD5=497c716adf4b056484601a887f34d152
 
-ENV LUA_VERSION=5.3.4
-ENV LUA_MD5=53a9c68bcc0eda58bdc2095ad5cdfc63
+ARG LUA_VERSION=5.3.4
+ARG LUA_MD5=53a9c68bcc0eda58bdc2095ad5cdfc63
 
 ### Runtime -- the base image for all others
 
@@ -30,7 +30,7 @@ RUN apt-get update && \
 FROM runtime as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y gcc make file libc-dev perl libtext-template-perl
+    apt-get install --no-install-recommends -y gcc make file libc-dev perl libtext-template-perl libreadline-dev
 
 
 ### OpenSSL
@@ -81,13 +81,17 @@ RUN curl -OJ "http://git.1wt.eu/web?p=libslz.git;a=snapshot;h=v${LIBSLZ_VERSION}
 
 # Lua
 
-RUN curl -OJ http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz && \
-    echo ${LUA_MD5} lua-${LUA_VERSION}.tar.gz | md5sum -c && \
+FROM builder as lua
+
+ARG LUA_VERSION
+ARG LUA_MD5
+
+RUN curl -OJ "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
+    echo "${LUA_MD5} lua-${LUA_VERSION}.tar.gz" | md5sum -c && \
     tar zxf lua-${LUA_VERSION}.tar.gz && \
     cd lua-${LUA_VERSION} && \
     make linux && \
-    make install && \
-    cd .. && \
+    make install INSTALL_TOP=/tmp/lua
 
 ### HAProxy
 
@@ -96,6 +100,10 @@ FROM builder as haproxy
 COPY --from=ssl   /tmp/openssl /tmp/openssl
 COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
 COPY --from=slz   /libslz      /libslz
+
+COPY --from=lua   /tmp/lua/bin     /usr/local/bin
+COPY --from=lua   /tmp/lua/include /usr/local/include
+COPY --from=lua   /tmp/lua/lib     /usr/local/lib
 
 ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
