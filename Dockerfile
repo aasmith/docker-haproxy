@@ -1,18 +1,18 @@
-ARG OS=debian:stretch-slim
+ARG OS=debian:buster-slim
 
-ARG OPENSSL_VERSION=1.1.0h
-ARG OPENSSL_SHA256=5835626cde9e99656585fc7aaa2302a73a7e1340bf8c14fd635a62c66802a517
+ARG OPENSSL_VERSION=1.1.1c
+ARG OPENSSL_SHA256=f6fb3079ad15076154eda9413fed42877d668e7069d9b87396d0804fdb3f4c90
 
-ARG PCRE2_VERSION=10.31
-ARG PCRE2_SHA256=e11ebd99dd23a7bccc9127d95d9978101b5f3cf0a6e7d25a1b1ca165a97166c4
+ARG PCRE2_VERSION=10.33
+ARG PCRE2_SHA256=e2e2899a97489fc6ad1b0cc3da7952c7cca991b4a0f7db6649b75d9721025d31
 
 ARG LIBSLZ_VERSION=1.1.0
 # No md5 for libslz yet -- the tarball is dynamically
 # generated and it differs every time.
 
 ARG HAPROXY_MAJOR=2.0
-ARG HAPROXY_VERSION=2.0.5
-ARG HAPROXY_MD5=497c716adf4b056484601a887f34d152
+ARG HAPROXY_VERSION=2.0.12
+ARG HAPROXY_MD5=b3c41a852e63fc840319c66e5e5ebe29
 
 
 ### Runtime -- the base image for all others
@@ -28,7 +28,7 @@ RUN apt-get update && \
 FROM runtime as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y gcc make file libc-dev perl libtext-template-perl
+    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl
 
 
 ### OpenSSL
@@ -59,7 +59,6 @@ RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
-
     LDFLAGS="-fPIE -pie -Wl,-z,relro -Wl,-z,now" \
     CFLAGS="-pthread -g -O2 -fPIE -fstack-protector-strong -Wformat -Werror=format-security -Wall -fvisibility=hidden" \
     ./configure --prefix=/tmp/pcre2 --disable-shared --enable-utf8 --enable-jit --enable-unicode-properties --disable-cpp && \
@@ -94,7 +93,7 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
     echo "${HAPROXY_MD5} haproxy-${HAPROXY_VERSION}.tar.gz" | md5sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
     make -C haproxy-${HAPROXY_VERSION} \
-      TARGET=linux-glibc \
+      TARGET=linux-glibc ARCH=x86_64 \
       USE_SLZ=1 SLZ_INC=../libslz/src SLZ_LIB=../libslz \
       USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
       USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
