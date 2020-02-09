@@ -10,9 +10,9 @@ ARG LIBSLZ_VERSION=1.1.0
 # No md5 for libslz yet -- the tarball is dynamically
 # generated and it differs every time.
 
-ARG HAPROXY_MAJOR=2.0
-ARG HAPROXY_VERSION=2.0.12
-ARG HAPROXY_MD5=b3c41a852e63fc840319c66e5e5ebe29
+ARG HAPROXY_MAJOR=2.1
+ARG HAPROXY_VERSION=2.1.2
+ARG HAPROXY_MD5=476a91a5eacc023efe6211dea4651f63
 
 
 ### Runtime -- the base image for all others

@@ -12,6 +12,7 @@ For a complete list of docker tags you can use, see: https://hub.docker.com/r/aa
 
 ### Branches
 
+[2.1](https://github.com/aasmith/docker-haproxy/tree/2.1) |
 [2.0](https://github.com/aasmith/docker-haproxy/tree/2.0) |
 [1.9](https://github.com/aasmith/docker-haproxy/tree/1.9) |
 [1.8](https://github.com/aasmith/docker-haproxy/tree/1.8) |
@@ -70,7 +71,9 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 2.0.12 2019/12/21 - https://haproxy.org/
+HA-Proxy version 2.1.2 2019/12/21 - https://haproxy.org/
+Status: stable branch - will stop receiving fixes around Q1 2021.
+Known bugs: http://www.haproxy.org/bugs/bugs-2.1.2.html
 Build options :
   TARGET  = linux-glibc
   CPU     = generic
@@ -83,19 +86,19 @@ Feature list : +EPOLL -KQUEUE -MY_EPOLL -MY_SPLICE +NETFILTER -PCRE -PCRE_JIT -P
 Default settings :
   bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
 
-Built with multi-threading support (MAX_THREADS=64, default=2).
-Built with OpenSSL version : OpenSSL 1.1.1c  28 May 2019
-Running on OpenSSL version : OpenSSL 1.1.1c  28 May 2019
+Built with multi-threading support (MAX_THREADS=64, default=4).
+Built with OpenSSL version : OpenSSL 1.1.1d  10 Sep 2019
+Running on OpenSSL version : OpenSSL 1.1.1d  10 Sep 2019
 OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
 OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2 TLSv1.3
 Built with network namespace support.
 Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
-Built with libslz for stateless compression.
-Compression algorithms supported : identity("identity"), deflate("deflate"), raw-deflate("deflate"), gzip("gzip")
-Built with PCRE2 version : 10.33 2019-04-16
+Built with PCRE2 version : 10.34 2019-11-21
 PCRE2 library supports JIT : yes
 Encrypted password support via crypt(3): yes
+Built with libslz for stateless compression.
+Compression algorithms supported : identity("identity"), deflate("deflate"), raw-deflate("deflate"), gzip("gzip")
 Built with the Prometheus exporter as a service
 
 Available polling systems :
@@ -106,18 +109,19 @@ Total: 3 (3 usable), will use epoll.
 
 Available multiplexer protocols :
 (protocols marked as <default> cannot be specified using 'proto' keyword)
-              h2 : mode=HTX        side=FE|BE     mux=H2
-              h2 : mode=HTTP       side=FE        mux=H2
-       <default> : mode=HTX        side=FE|BE     mux=H1
-       <default> : mode=TCP|HTTP   side=FE|BE     mux=PASS
+              h2 : mode=HTTP       side=FE|BE     mux=H2
+            fcgi : mode=HTTP       side=BE        mux=FCGI
+       <default> : mode=HTTP       side=FE|BE     mux=H1
+       <default> : mode=TCP        side=FE|BE     mux=PASS
 
 Available services :
 	prometheus-exporter
 
 Available filters :
 	[SPOE] spoe
-	[COMP] compression
 	[CACHE] cache
+	[FCGI] fcgi-app
 	[TRACE] trace
+	[COMP] compression
 
 ```
