@@ -44,7 +44,7 @@ RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz &&
     cd openssl-${OPENSSL_VERSION} && \
     ./config no-shared --prefix=/tmp/openssl && \
     make && \
-    make TESTS='-40' test && \
+    make test && \
     make install_sw
 
 
