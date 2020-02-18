@@ -14,6 +14,8 @@ ARG HAPROXY_MAJOR=2.1
 ARG HAPROXY_VERSION=2.1.2
 ARG HAPROXY_MD5=476a91a5eacc023efe6211dea4651f63
 
+ARG LUA_VERSION=5.3.4
+ARG LUA_MD5=53a9c68bcc0eda58bdc2095ad5cdfc63
 
 ### Runtime -- the base image for all others
 
@@ -28,7 +30,7 @@ RUN apt-get update && \
 FROM runtime as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl
+    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl libreadline-dev
 
 
 ### OpenSSL
@@ -76,6 +78,19 @@ RUN curl -OJ "http://git.1wt.eu/web?p=libslz.git;a=snapshot;h=v${LIBSLZ_VERSION}
     tar zxvf libslz-v${LIBSLZ_VERSION}.tar.gz && \
     make -C libslz static
 
+# Lua
+
+FROM builder as lua
+
+ARG LUA_VERSION
+ARG LUA_MD5
+
+RUN curl -OJ "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
+    echo "${LUA_MD5} lua-${LUA_VERSION}.tar.gz" | md5sum -c && \
+    tar zxf lua-${LUA_VERSION}.tar.gz && \
+    cd lua-${LUA_VERSION} && \
+    make linux && \
+    make install INSTALL_TOP=/tmp/lua
 
 ### HAProxy
 
@@ -84,6 +99,10 @@ FROM builder as haproxy
 COPY --from=ssl   /tmp/openssl /tmp/openssl
 COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
 COPY --from=slz   /libslz      /libslz
+
+COPY --from=lua   /tmp/lua/bin     /usr/local/bin
+COPY --from=lua   /tmp/lua/include /usr/local/include
+COPY --from=lua   /tmp/lua/lib     /usr/local/lib
 
 ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
@@ -97,6 +116,7 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
       USE_SLZ=1 SLZ_INC=../libslz/src SLZ_LIB=../libslz \
       USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
       USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
+      USE_LUA=1 \
       EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o" \
       DESTDIR=/tmp/haproxy PREFIX= \
       all \
