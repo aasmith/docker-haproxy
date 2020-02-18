@@ -6,7 +6,7 @@ ARG OPENSSL_SHA256=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5
 ARG PCRE2_VERSION=10.36
 ARG PCRE2_SHA256=b95ddb9414f91a967a887d69617059fb672b914f56fa3d613812c1ee8e8a1a37
 
-ARG LIBSLZ_VERSION=1.1.0
+ARG LIBSLZ_VERSION=1.2.0
 # No md5 for libslz yet -- the tarball is dynamically
 # generated and it differs every time.
 
