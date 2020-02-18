@@ -1,5 +1,5 @@
 # aasmith/docker-haproxy
-HAProxy compiled against newer/faster libraries (PCRE w/ JIT, SLZ).
+HAProxy + *LUA* compiled against newer/faster libraries (PCRE w/ JIT, SLZ, and LibreSSL).
 
 This haproxy docker image uses statically-linked modern libraries where
 possible. Otherwise, it attempts to follow the official docker image as
@@ -40,6 +40,15 @@ FROM aasmith/haproxy:1.8.0 # use exactly 1.8.0
 
 ## Libraries
 
+### Lua
+
+Since HAProxy 1.6, [Lua support][4] has been available for adding in extra features
+that do not require re-compilation, or knowledge of C.
+
+[4]: http://blog.haproxy.com/2015/03/12/haproxy-1-6-dev1-and-lua/
+
+Lua is compiled into the haproxy images by default, starting with versions 2.0.13, and 2.1.3.
+
 ### PCRE
 
 Enables PCRE JIT compilation for faster regular expression parsing. The [PCRE
@@ -76,9 +85,9 @@ Build options :
   CPU     = generic
   CC      = gcc
   CFLAGS  = -m64 -march=x86-64 -O2 -g -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-stringop-overflow -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference
-  OPTIONS = USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 USE_OPENSSL=1 USE_SLZ=1
+  OPTIONS = USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 USE_OPENSSL=1 USE_LUA=1 USE_SLZ=1
 
-Feature list : +EPOLL -KQUEUE -MY_EPOLL -MY_SPLICE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED -REGPARM -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H -VSYSCALL +GETADDRINFO +OPENSSL -LUA +FUTEX +ACCEPT4 -MY_ACCEPT4 -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
+Feature list : +EPOLL -KQUEUE -MY_EPOLL -MY_SPLICE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED -REGPARM -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H -VSYSCALL +GETADDRINFO +OPENSSL +LUA +FUTEX +ACCEPT4 -MY_ACCEPT4 -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
 
 Default settings :
   bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
@@ -89,6 +98,7 @@ Running on OpenSSL version : OpenSSL 1.1.1c  28 May 2019
 OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
 OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2 TLSv1.3
+Built with Lua version : Lua 5.3.4
 Built with network namespace support.
 Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
 Built with libslz for stateless compression.
