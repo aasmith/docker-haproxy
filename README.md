@@ -79,7 +79,7 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 2.0.12 2019/12/21 - https://haproxy.org/
+HA-Proxy version 2.0.13 2020/02/13 - https://haproxy.org/
 Build options :
   TARGET  = linux-glibc
   CPU     = generic
