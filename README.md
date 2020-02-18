@@ -78,9 +78,9 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 2.1.2 2019/12/21 - https://haproxy.org/
+HA-Proxy version 2.1.3 2020/02/12 - https://haproxy.org/
 Status: stable branch - will stop receiving fixes around Q1 2021.
-Known bugs: http://www.haproxy.org/bugs/bugs-2.1.2.html
+Known bugs: http://www.haproxy.org/bugs/bugs-2.1.3.html
 Build options :
   TARGET  = linux-glibc
   CPU     = generic
