@@ -1,5 +1,5 @@
 # aasmith/docker-haproxy
-HAProxy + *LUA* compiled against newer/faster libraries (PCRE w/ JIT, SLZ, and LibreSSL).
+HAProxy + *LUA* compiled against newer/faster libraries (PCRE w/ JIT, SLZ, OpenSSL).
 
 This haproxy docker image uses statically-linked modern libraries where
 possible. Otherwise, it attempts to follow the official docker image as
@@ -8,19 +8,19 @@ below.
 
 ## Available Versions
 
-For a complete list of docker tags you can use, see: https://hub.docker.com/r/aasmith/haproxy/tags/
+For a complete list of docker tags you can use, see the list of tags provided by
+[GitHub](https://github.com/aasmith/docker-haproxy/tags), or
+[DockerHub](https://hub.docker.com/r/aasmith/haproxy/tags).
 
-### Branches
 
-[2.1](https://github.com/aasmith/docker-haproxy/tree/2.1) |
-[2.0](https://github.com/aasmith/docker-haproxy/tree/2.0) |
-[1.9](https://github.com/aasmith/docker-haproxy/tree/1.9) |
-[1.8](https://github.com/aasmith/docker-haproxy/tree/1.8) |
-[1.7](https://github.com/aasmith/docker-haproxy/tree/1.7) |
-[1.6](https://github.com/aasmith/docker-haproxy/tree/1.6) |
---- | --- | --- | --- | ---
 
 ## Usage
+
+Display the HAProxy version from the CLI:
+
+```
+docker run -it --rm aasmith/haproxy:2.3.2 haproxy -vv
+```
 
 Example `Dockerfile`:
 
@@ -32,11 +32,11 @@ COPY haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
 To pin to a specific version, use the branch or tag:
 
 ```
-FROM aasmith/haproxy:1.8 # stay on the latest the 1.8 line
+FROM aasmith/haproxy:2.3 # stay on the latest the 2.3 line
 ```
 
 ```
-FROM aasmith/haproxy:1.8.0 # use exactly 1.8.0
+FROM aasmith/haproxy:2.3.2 # use exactly 2.3.2
 ```
 
 ## Libraries
