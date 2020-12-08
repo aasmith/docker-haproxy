@@ -1,7 +1,7 @@
 ARG OS=debian:stretch-slim
 
-ARG OPENSSL_VERSION=1.1.0h
-ARG OPENSSL_SHA256=5835626cde9e99656585fc7aaa2302a73a7e1340bf8c14fd635a62c66802a517
+ARG OPENSSL_VERSION=1.1.1i
+ARG OPENSSL_SHA256=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242
 
 ARG PCRE2_VERSION=10.31
 ARG PCRE2_SHA256=e11ebd99dd23a7bccc9127d95d9978101b5f3cf0a6e7d25a1b1ca165a97166c4
@@ -97,7 +97,7 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
       TARGET=linux2628 \
       USE_SLZ=1 SLZ_INC=../libslz/src SLZ_LIB=../libslz \
       USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
-      USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
+      USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib ADDLIB=-lpthread \
       DESTDIR=/tmp/haproxy PREFIX= \
       all \
       install-bin && \
