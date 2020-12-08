@@ -12,7 +12,7 @@ ARG LIBSLZ_VERSION=1.2.0
 
 ARG HAPROXY_MAJOR=2.1
 ARG HAPROXY_VERSION=2.1.3
-ARG HAPROXY_MD5=bea4726d8c99f5d9bac0e62906a1f2d0
+ARG HAPROXY_SHA256=bb678e550374d0d9d9312885fb9d270b501dae9e3b336f0a4379c667dae00b59
 
 ARG LUA_VERSION=5.3.4
 ARG LUA_MD5=53a9c68bcc0eda58bdc2095ad5cdfc63
@@ -106,10 +106,10 @@ COPY --from=lua   /tmp/lua/lib     /usr/local/lib
 
 ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
-ARG HAPROXY_MD5
+ARG HAPROXY_SHA256
 
 RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
-    echo "${HAPROXY_MD5} haproxy-${HAPROXY_VERSION}.tar.gz" | md5sum -c && \
+    echo "${HAPROXY_SHA256} haproxy-${HAPROXY_VERSION}.tar.gz" | sha256sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
     make -C haproxy-${HAPROXY_VERSION} \
       TARGET=linux-glibc ARCH=x86_64 \
