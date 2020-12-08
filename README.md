@@ -78,9 +78,10 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 2.1.3 2020/02/12 - https://haproxy.org/
+HA-Proxy version 2.1.10-7aff177 2020/11/05 - https://haproxy.org/
 Status: stable branch - will stop receiving fixes around Q1 2021.
-Known bugs: http://www.haproxy.org/bugs/bugs-2.1.3.html
+Known bugs: http://www.haproxy.org/bugs/bugs-2.1.10.html
+Running on: Linux 4.9.184-linuxkit #1 SMP Tue Jul 2 22:58:16 UTC 2019 x86_64
 Build options :
   TARGET  = linux-glibc
   CPU     = generic
@@ -88,21 +89,21 @@ Build options :
   CFLAGS  = -m64 -march=x86-64 -O2 -g -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-stringop-overflow -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference
   OPTIONS = USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 USE_OPENSSL=1 USE_LUA=1 USE_SLZ=1
 
-Feature list : +EPOLL -KQUEUE -MY_EPOLL -MY_SPLICE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED -REGPARM -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H -VSYSCALL +GETADDRINFO +OPENSSL +LUA +FUTEX +ACCEPT4 -MY_ACCEPT4 -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
+Feature list : +EPOLL -KQUEUE -MY_EPOLL -MY_SPLICE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED -REGPARM -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H -VSYSCALL +BACKTRACE +GETADDRINFO +OPENSSL +LUA +FUTEX +ACCEPT4 -CLOSEFROM -MY_ACCEPT4 -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
 
 Default settings :
   bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
 
-Built with multi-threading support (MAX_THREADS=64, default=2).
-Built with OpenSSL version : OpenSSL 1.1.1d  10 Sep 2019
-Running on OpenSSL version : OpenSSL 1.1.1d  10 Sep 2019
+Built with multi-threading support (MAX_THREADS=64, default=4).
+Built with OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
+Running on OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
 OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
 OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2 TLSv1.3
 Built with Lua version : Lua 5.3.4
 Built with network namespace support.
 Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
-Built with PCRE2 version : 10.34 2019-11-21
+Built with PCRE2 version : 10.36 2020-12-04
 PCRE2 library supports JIT : yes
 Encrypted password support via crypt(3): yes
 Built with libslz for stateless compression.
