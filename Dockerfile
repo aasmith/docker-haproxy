@@ -3,8 +3,8 @@ ARG OS=debian:stretch-slim
 ARG OPENSSL_VERSION=1.1.1i
 ARG OPENSSL_SHA256=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242
 
-ARG PCRE2_VERSION=10.31
-ARG PCRE2_SHA256=e11ebd99dd23a7bccc9127d95d9978101b5f3cf0a6e7d25a1b1ca165a97166c4
+ARG PCRE2_VERSION=10.36
+ARG PCRE2_SHA256=b95ddb9414f91a967a887d69617059fb672b914f56fa3d613812c1ee8e8a1a37
 
 ARG LIBSLZ_VERSION=1.1.0
 # No md5 for libslz yet -- the tarball is dynamically
@@ -55,7 +55,7 @@ FROM builder as pcre2
 ARG PCRE2_VERSION
 ARG PCRE2_SHA256
 
-RUN curl -OJ "ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
+RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
