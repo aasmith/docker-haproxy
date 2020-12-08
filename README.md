@@ -79,8 +79,8 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 1.8.1 2017/12/03
-Copyright 2000-2017 Willy Tarreau <willy@haproxy.org>
+HA-Proxy version 1.8.27-493ce0b 2020/11/06
+Copyright 2000-2020 Willy Tarreau <willy@haproxy.org>
 
 Build options :
   TARGET  = linux2628
@@ -92,15 +92,15 @@ Build options :
 Default settings :
   maxconn = 2000, bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
 
-Built with OpenSSL version : OpenSSL 1.1.0g  2 Nov 2017
-Running on OpenSSL version : OpenSSL 1.1.0g  2 Nov 2017
+Built with OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
+Running on OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
 OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
-OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2
+OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2 TLSv1.3
 Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
 Encrypted password support via crypt(3): yes
 Built with multi-threading support.
-Built with PCRE2 version : 10.30 2017-08-14
+Built with PCRE2 version : 10.36 2020-12-04
 PCRE2 library supports JIT : yes
 Built with libslz for stateless compression.
 Compression algorithms supported : identity("identity"), deflate("deflate"), raw-deflate("deflate"), gzip("gzip")

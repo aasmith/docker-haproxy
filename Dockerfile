@@ -11,8 +11,8 @@ ARG LIBSLZ_VERSION=1.2.0
 # generated and it differs every time.
 
 ARG HAPROXY_MAJOR=1.8
-ARG HAPROXY_VERSION=1.8.9
-ARG HAPROXY_MD5=1466cf8c1c036e376265b86df43efc89
+ARG HAPROXY_VERSION=1.8.27
+ARG HAPROXY_SHA256=56ba6a21e13215fae56472ad37d5d68c3f19bde9da94c59e70b869eecf48bf50
 
 
 ### Runtime -- the base image for all others
@@ -88,10 +88,10 @@ COPY --from=slz   /libslz      /libslz
 
 ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
-ARG HAPROXY_MD5
+ARG HAPROXY_SHA256
 
 RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
-    echo "${HAPROXY_MD5} haproxy-${HAPROXY_VERSION}.tar.gz" | md5sum -c && \
+    echo "${HAPROXY_SHA256} haproxy-${HAPROXY_VERSION}.tar.gz" | sha256sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
     make -C haproxy-${HAPROXY_VERSION} \
       TARGET=linux2628 \
