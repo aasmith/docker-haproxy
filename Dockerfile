@@ -1,21 +1,21 @@
 ARG OS=debian:buster-slim
 
-ARG OPENSSL_VERSION=1.1.1d
-ARG OPENSSL_SHA256=1e3a91bc1f9dfce01af26026f856e064eab4c8ee0a8f457b5ae30b40b8b711f2
+ARG OPENSSL_VERSION=1.1.1i
+ARG OPENSSL_SHA256=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242
 
-ARG PCRE2_VERSION=10.34
-ARG PCRE2_SHA256=da6aba7ba2509e918e41f4f744a59fa41a2425c59a298a232e7fe85691e00379
+ARG PCRE2_VERSION=10.36
+ARG PCRE2_SHA256=b95ddb9414f91a967a887d69617059fb672b914f56fa3d613812c1ee8e8a1a37
 
-ARG LIBSLZ_VERSION=1.1.0
+ARG LIBSLZ_VERSION=1.2.0
 # No md5 for libslz yet -- the tarball is dynamically
 # generated and it differs every time.
 
-ARG HAPROXY_MAJOR=2.1
-ARG HAPROXY_VERSION=2.1.3
-ARG HAPROXY_MD5=bea4726d8c99f5d9bac0e62906a1f2d0
+ARG HAPROXY_MAJOR=2.3
+ARG HAPROXY_VERSION=2.3.2
+ARG HAPROXY_SHA256=99cb73bb791a2cd18898d0595e14fdc820a6cbd622c762f4ed83f2884d038fd5
 
-ARG LUA_VERSION=5.3.4
-ARG LUA_MD5=53a9c68bcc0eda58bdc2095ad5cdfc63
+ARG LUA_VERSION=5.4.2
+ARG LUA_MD5=49c92d6a49faba342c35c52e1ac3f81e
 
 ### Runtime -- the base image for all others
 
@@ -106,10 +106,10 @@ COPY --from=lua   /tmp/lua/lib     /usr/local/lib
 
 ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
-ARG HAPROXY_MD5
+ARG HAPROXY_SHA256
 
 RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
-    echo "${HAPROXY_MD5} haproxy-${HAPROXY_VERSION}.tar.gz" | md5sum -c && \
+    echo "${HAPROXY_SHA256} haproxy-${HAPROXY_VERSION}.tar.gz" | sha256sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
     make -C haproxy-${HAPROXY_VERSION} \
       TARGET=linux-glibc ARCH=x86_64 \

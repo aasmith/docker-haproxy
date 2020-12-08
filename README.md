@@ -1,5 +1,5 @@
 # aasmith/docker-haproxy
-HAProxy + *LUA* compiled against newer/faster libraries (PCRE w/ JIT, SLZ, and LibreSSL).
+HAProxy + *LUA* compiled against newer/faster libraries (PCRE w/ JIT, SLZ, OpenSSL).
 
 This haproxy docker image uses statically-linked modern libraries where
 possible. Otherwise, it attempts to follow the official docker image as
@@ -8,19 +8,19 @@ below.
 
 ## Available Versions
 
-For a complete list of docker tags you can use, see: https://hub.docker.com/r/aasmith/haproxy/tags/
+For a complete list of docker tags you can use, see the list of tags provided by
+[GitHub](https://github.com/aasmith/docker-haproxy/tags), or
+[DockerHub](https://hub.docker.com/r/aasmith/haproxy/tags).
 
-### Branches
 
-[2.1](https://github.com/aasmith/docker-haproxy/tree/2.1) |
-[2.0](https://github.com/aasmith/docker-haproxy/tree/2.0) |
-[1.9](https://github.com/aasmith/docker-haproxy/tree/1.9) |
-[1.8](https://github.com/aasmith/docker-haproxy/tree/1.8) |
-[1.7](https://github.com/aasmith/docker-haproxy/tree/1.7) |
-[1.6](https://github.com/aasmith/docker-haproxy/tree/1.6) |
---- | --- | --- | --- | ---
 
 ## Usage
+
+Display the HAProxy version from the CLI:
+
+```
+docker run -it --rm aasmith/haproxy:2.3.2 haproxy -vv
+```
 
 Example `Dockerfile`:
 
@@ -32,11 +32,11 @@ COPY haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
 To pin to a specific version, use the branch or tag:
 
 ```
-FROM aasmith/haproxy:1.8 # stay on the latest the 1.8 line
+FROM aasmith/haproxy:2.3 # stay on the latest the 2.3 line
 ```
 
 ```
-FROM aasmith/haproxy:1.8.0 # use exactly 1.8.0
+FROM aasmith/haproxy:2.3.2 # use exactly 2.3.2
 ```
 
 ## Libraries
@@ -78,36 +78,39 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 2.1.3 2020/02/12 - https://haproxy.org/
-Status: stable branch - will stop receiving fixes around Q1 2021.
-Known bugs: http://www.haproxy.org/bugs/bugs-2.1.3.html
+HA-Proxy version 2.3.2-d522db7 2020/11/28 - https://haproxy.org/
+Status: stable branch - will stop receiving fixes around Q1 2022.
+Known bugs: http://www.haproxy.org/bugs/bugs-2.3.2.html
+Running on: Linux 4.9.184-linuxkit #1 SMP Tue Jul 2 22:58:16 UTC 2019 x86_64
 Build options :
   TARGET  = linux-glibc
   CPU     = generic
-  CC      = gcc
-  CFLAGS  = -m64 -march=x86-64 -O2 -g -fno-strict-aliasing -Wdeclaration-after-statement -fwrapv -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-old-style-declaration -Wno-ignored-qualifiers -Wno-clobbered -Wno-missing-field-initializers -Wno-implicit-fallthrough -Wno-stringop-overflow -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference
+  CC      = cc
+  CFLAGS  = -m64 -march=x86-64 -O2 -g -Wall -Wextra -Wdeclaration-after-statement -fwrapv -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wno-missing-field-initializers -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference
   OPTIONS = USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 USE_OPENSSL=1 USE_LUA=1 USE_SLZ=1
+  DEBUG   = 
 
-Feature list : +EPOLL -KQUEUE -MY_EPOLL -MY_SPLICE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED -REGPARM -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H -VSYSCALL +GETADDRINFO +OPENSSL +LUA +FUTEX +ACCEPT4 -MY_ACCEPT4 -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
+Feature list : +EPOLL -KQUEUE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED +BACKTRACE -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H +GETADDRINFO +OPENSSL +LUA +FUTEX +ACCEPT4 -CLOSEFROM -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
 
 Default settings :
   bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
 
-Built with multi-threading support (MAX_THREADS=64, default=2).
-Built with OpenSSL version : OpenSSL 1.1.1d  10 Sep 2019
-Running on OpenSSL version : OpenSSL 1.1.1d  10 Sep 2019
+Built with multi-threading support (MAX_THREADS=64, default=4).
+Built with OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
+Running on OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
 OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
 OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2 TLSv1.3
-Built with Lua version : Lua 5.3.4
+Built with Lua version : Lua 5.4.2
 Built with network namespace support.
-Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
-Built with PCRE2 version : 10.34 2019-11-21
-PCRE2 library supports JIT : yes
-Encrypted password support via crypt(3): yes
+Built with the Prometheus exporter as a service
 Built with libslz for stateless compression.
 Compression algorithms supported : identity("identity"), deflate("deflate"), raw-deflate("deflate"), gzip("gzip")
-Built with the Prometheus exporter as a service
+Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
+Built with PCRE2 version : 10.36 2020-12-04
+PCRE2 library supports JIT : yes
+Encrypted password support via crypt(3): yes
+Built with gcc compiler version 8.3.0
 
 Available polling systems :
       epoll : pref=300,  test result OK
@@ -129,7 +132,7 @@ Available filters :
 	[SPOE] spoe
 	[CACHE] cache
 	[FCGI] fcgi-app
-	[TRACE] trace
 	[COMP] compression
+	[TRACE] trace
 
 ```
