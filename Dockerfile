@@ -1,7 +1,7 @@
 ARG OS=debian:buster-slim
 
-ARG OPENSSL_VERSION=1.1.1i
-ARG OPENSSL_SHA256=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242
+ARG OPENSSL_VERSION=1.1.1k
+ARG OPENSSL_SHA256=892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5
 
 ARG PCRE2_VERSION=10.36
 ARG PCRE2_SHA256=b95ddb9414f91a967a887d69617059fb672b914f56fa3d613812c1ee8e8a1a37
@@ -44,7 +44,7 @@ RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz &&
     echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
     cd openssl-${OPENSSL_VERSION} && \
-    ./config no-shared --prefix=/tmp/openssl && \
+    ./config no-shared --prefix=/tmp/openssl --openssldir=/tmp/openssl && \
     make && \
     make test && \
     make install_sw
