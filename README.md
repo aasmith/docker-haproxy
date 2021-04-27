@@ -78,9 +78,9 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 2.2.6-3709bd4 2020/11/30 - https://haproxy.org/
+HA-Proxy version 2.2.13-5f3eb59 2021/04/02 - https://haproxy.org/
 Status: long-term supported branch - will stop receiving fixes around Q2 2025.
-Known bugs: http://www.haproxy.org/bugs/bugs-2.2.6.html
+Known bugs: http://www.haproxy.org/bugs/bugs-2.2.13.html
 Running on: Linux 4.9.184-linuxkit #1 SMP Tue Jul 2 22:58:16 UTC 2019 x86_64
 Build options :
   TARGET  = linux-glibc
@@ -96,8 +96,8 @@ Default settings :
   bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
 
 Built with multi-threading support (MAX_THREADS=64, default=4).
-Built with OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
-Running on OpenSSL version : OpenSSL 1.1.1i  8 Dec 2020
+Built with OpenSSL version : OpenSSL 1.1.1k  25 Mar 2021
+Running on OpenSSL version : OpenSSL 1.1.1k  25 Mar 2021
 OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
 OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2 TLSv1.3
@@ -125,9 +125,7 @@ Available multiplexer protocols :
               h2 : mode=HTTP       side=FE|BE     mux=H2
        <default> : mode=TCP        side=FE|BE     mux=PASS
 
-Available services :
-	prometheus-exporter
-
+Available services : prometheus-exporter
 Available filters :
 	[SPOE] spoe
 	[COMP] compression
