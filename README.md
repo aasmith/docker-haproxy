@@ -78,19 +78,19 @@ See the [Stateless Zip project][2] for background, benchmarks, etc.
 Output from `haproxy -vv`:
 
 ```
-HA-Proxy version 2.3.10-4764f0e 2021/04/23 - https://haproxy.org/
-Status: stable branch - will stop receiving fixes around Q1 2022.
-Known bugs: http://www.haproxy.org/bugs/bugs-2.3.10.html
+HA-Proxy version 2.4-dev17-bfd19d6 2021/04/23 - https://haproxy.org/
+Status: development branch - not safe for use in production.
+Known bugs: https://github.com/haproxy/haproxy/issues?q=is:issue+is:open
 Running on: Linux 5.10.25-linuxkit #1 SMP Tue Mar 23 09:27:39 UTC 2021 x86_64
 Build options :
   TARGET  = linux-glibc
   CPU     = generic
   CC      = cc
   CFLAGS  = -m64 -march=x86-64 -O2 -g -Wall -Wextra -Wdeclaration-after-statement -fwrapv -Wno-unused-label -Wno-sign-compare -Wno-unused-parameter -Wno-clobbered -Wno-missing-field-initializers -Wno-cast-function-type -Wtype-limits -Wshift-negative-value -Wshift-overflow=2 -Wduplicated-cond -Wnull-dereference
-  OPTIONS = USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 USE_OPENSSL=1 USE_LUA=1 USE_SLZ=1
+  OPTIONS = USE_PCRE2_JIT=1 USE_STATIC_PCRE2=1 USE_OPENSSL=1 USE_LUA=1 USE_SLZ=1 USE_PROMEX=1
   DEBUG   = 
 
-Feature list : +EPOLL -KQUEUE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED +BACKTRACE -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H +GETADDRINFO +OPENSSL +LUA +FUTEX +ACCEPT4 -CLOSEFROM -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS
+Feature list : +EPOLL -KQUEUE +NETFILTER -PCRE -PCRE_JIT -PCRE2 +PCRE2_JIT +POLL -PRIVATE_CACHE +THREAD -PTHREAD_PSHARED +BACKTRACE -STATIC_PCRE +STATIC_PCRE2 +TPROXY +LINUX_TPROXY +LINUX_SPLICE +LIBCRYPT +CRYPT_H +GETADDRINFO +OPENSSL +LUA +FUTEX +ACCEPT4 -CLOSEFROM -ZLIB +SLZ +CPU_AFFINITY +TFO +NS +DL +RT -DEVICEATLAS -51DEGREES -WURFL -SYSTEMD -OBSOLETE_LINKER +PRCTL +THREAD_DUMP -EVPORTS -OT -QUIC +PROMEX
 
 Default settings :
   bufsize = 16384, maxrewrite = 1024, maxpollevents = 200
@@ -102,8 +102,8 @@ OpenSSL library supports TLS extensions : yes
 OpenSSL library supports SNI : yes
 OpenSSL library supports : TLSv1.0 TLSv1.1 TLSv1.2 TLSv1.3
 Built with Lua version : Lua 5.4.2
-Built with network namespace support.
 Built with the Prometheus exporter as a service
+Built with network namespace support.
 Built with libslz for stateless compression.
 Compression algorithms supported : identity("identity"), deflate("deflate"), raw-deflate("deflate"), gzip("gzip")
 Built with transparent proxy support using: IP_TRANSPARENT IPV6_TRANSPARENT IP_FREEBIND
@@ -120,10 +120,12 @@ Total: 3 (3 usable), will use epoll.
 
 Available multiplexer protocols :
 (protocols marked as <default> cannot be specified using 'proto' keyword)
-              h2 : mode=HTTP       side=FE|BE     mux=H2
-            fcgi : mode=HTTP       side=BE        mux=FCGI
-       <default> : mode=HTTP       side=FE|BE     mux=H1
-       <default> : mode=TCP        side=FE|BE     mux=PASS
+              h2 : mode=HTTP       side=FE|BE     mux=H2       flags=HTX|CLEAN_ABRT|HOL_RISK|NO_UPG
+            fcgi : mode=HTTP       side=BE        mux=FCGI     flags=HTX|HOL_RISK|NO_UPG
+       <default> : mode=HTTP       side=FE|BE     mux=H1       flags=HTX
+              h1 : mode=HTTP       side=FE|BE     mux=H1       flags=HTX|NO_UPG
+       <default> : mode=TCP        side=FE|BE     mux=PASS     flags=
+            none : mode=TCP        side=FE|BE     mux=PASS     flags=NO_UPG
 
 Available services : prometheus-exporter
 Available filters :
