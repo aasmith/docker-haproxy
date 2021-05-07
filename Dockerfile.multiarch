@@ -1,4 +1,8 @@
-ARG OS=debian:buster-slim
+ARG OS=debian:bullseye-slim
+
+ARG ARCH=
+ARG TOOLCHAIN=
+ARG OPENSSL_TARGET=
 
 ARG OPENSSL_VERSION=
 ARG OPENSSL_SHA256=
@@ -17,42 +21,48 @@ ARG HAPROXY_SHA256=
 ARG LUA_VERSION=
 ARG LUA_MD5=
 
-### Runtime -- the base image for all others
+# Build using cross-compilation, with amd64 as the build arch and $ARCH as the host
 
-FROM $OS as runtime
+FROM --platform=linux/amd64 $OS as builder
 
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y curl ca-certificates
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
-
-### Builder -- adds common utils needed for all build images
-
-FROM runtime as builder
-
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl libreadline-dev
-
+RUN dpkg --add-architecture "${ARCH}" && \
+    apt-get update && \
+    apt-get install --no-install-recommends -y \
+            gcc-10-${TOOLCHAIN} libc6-dev-${ARCH}-cross make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev:${ARCH}
 
 ### OpenSSL
 
-FROM builder as ssl
+FROM --platform=linux/amd64 builder as ssl
+
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
 ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
+ARG OPENSSL_TARGET
 
 RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
     echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
     cd openssl-${OPENSSL_VERSION} && \
-    ./config no-shared --prefix=/tmp/openssl --openssldir=/tmp/openssl && \
+    ./Configure ${OPENSSL_TARGET} CROSS_COMPILE=/usr/bin/${TOOLCHAIN}- CC=gcc-10 \
+             -march=${ARCH_FLAGS} enable-ec_nistp_64_gcc_128 \
+             no-shared --prefix=/tmp/openssl --openssldir=/tmp/openssl && \
     make && \
-    make test && \
     make install_sw
-
 
 ### PCRE2
 
-FROM builder as pcre2
+FROM --platform=linux/amd64 builder as pcre2
+
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
 ARG PCRE2_VERSION
 ARG PCRE2_SHA256
@@ -61,26 +71,35 @@ RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
-    LDFLAGS="-fPIE -pie -Wl,-z,relro -Wl,-z,now" \
-    CFLAGS="-pthread -g -O2 -fPIE -fstack-protector-strong -Wformat -Werror=format-security -Wall -fvisibility=hidden" \
-    ./configure --prefix=/tmp/pcre2 --disable-shared --enable-utf8 --enable-jit --enable-unicode-properties --disable-cpp && \
-    make check && \
+    CC=/usr/bin/${TOOLCHAIN}-gcc-10 CFLAGS="-O3 -march=${ARCH_FLAGS} -g" \
+    ./configure --prefix=/tmp/pcre2 --disable-shared --enable-jit --host=${TOOLCHAIN} && \
     make install
-
 
 ### libslz
 
-FROM builder as slz
+FROM --platform=linux/amd64 builder as slz
+
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
 ARG LIBSLZ_VERSION
 
 RUN curl -OJ "http://git.1wt.eu/web?p=libslz.git;a=snapshot;h=v${LIBSLZ_VERSION};sf=tgz" && \
     tar zxvf libslz-v${LIBSLZ_VERSION}.tar.gz && \
-    make -C libslz static
+    make -C libslz \
+      CROSS_COMPILE=/usr/bin/${TOOLCHAIN}- \
+      CC=/usr/bin/${TOOLCHAIN}-gcc-10 \
+      CFLAGS="-march=${ARCH_FLAGS} -g" \
+      static
 
 # Lua
 
-FROM builder as lua
+FROM --platform=linux/amd64 builder as lua
+
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
 ARG LUA_VERSION
 ARG LUA_MD5
@@ -89,20 +108,24 @@ RUN curl -OJ "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
     echo "${LUA_MD5} lua-${LUA_VERSION}.tar.gz" | md5sum -c && \
     tar zxf lua-${LUA_VERSION}.tar.gz && \
     cd lua-${LUA_VERSION} && \
-    make linux && \
+    make CC="/usr/bin/${TOOLCHAIN}-gcc-10" \
+         MYCFLAGS="-march=${ARCH_FLAGS} -g" \
+         AR="/usr/bin/${TOOLCHAIN}-ar rcu" \
+         RANLIB=/usr/bin/${TOOLCHAIN}-ranlib && \
     make install INSTALL_TOP=/tmp/lua
 
 ### HAProxy
 
-FROM builder as haproxy
+FROM --platform=linux/amd64 builder as haproxy
 
 COPY --from=ssl   /tmp/openssl /tmp/openssl
 COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
 COPY --from=slz   /libslz      /libslz
+COPY --from=lua   /tmp/lua     /tmp/lua
 
-COPY --from=lua   /tmp/lua/bin     /usr/local/bin
-COPY --from=lua   /tmp/lua/include /usr/local/include
-COPY --from=lua   /tmp/lua/lib     /usr/local/lib
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
 ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
@@ -112,12 +135,14 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
     echo "${HAPROXY_SHA256} haproxy-${HAPROXY_VERSION}.tar.gz" | sha256sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
     make -C haproxy-${HAPROXY_VERSION} \
-      TARGET=linux-glibc ARCH=x86_64 \
+      TARGET=linux-glibc \
+      ARCH_FLAGS="-march=${ARCH_FLAGS}" \
+      CC=/usr/bin/${TOOLCHAIN}-gcc-10 \
       USE_SLZ=1 SLZ_INC=../libslz/src SLZ_LIB=../libslz \
       USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
       USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
-      USE_LUA=1 \
-      EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o" \
+      USE_LUA=1 LUA_LIB=/tmp/lua/lib LUA_INC=/tmp/lua/include \
+      USE_PROMEX=1 \
       DESTDIR=/tmp/haproxy PREFIX= \
       all \
       install-bin && \
@@ -125,9 +150,12 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
     cp -R haproxy-${HAPROXY_VERSION}/examples/errorfiles /tmp/haproxy/etc/haproxy/errors
 
 
-### HAProxy runtime image
 
-FROM runtime
+# Switch to target platform
+FROM --platform=linux/$ARCH $OS as runtime
+
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y curl ca-certificates
 
 COPY --from=haproxy /tmp/haproxy /usr/local/
 

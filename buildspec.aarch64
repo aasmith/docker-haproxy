@@ -1,0 +1,28 @@
+# Target architecture in docker parlance. This is essentially $GOARCH, per the
+# manifest spec at https://docs.docker.com/registry/spec/manifest-v2-2/
+#
+# The "linux/" OS prefix is assumed.
+#
+export ARCH=arm64
+
+# The advertised variant that will be used in the manifest.
+export VARIANT=v8
+
+# GCC arch flags to ensure we get the right architecture-specific features.
+#
+# In this case, we want the ARM v8.2-a instruction set in order to fully capitalize
+# on atomic instructions.
+#
+# See https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html#index-march-2
+#     https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html#index-march-14
+#     https://github.com/aws/aws-graviton-getting-started/blob/master/c-c%2B%2B.md
+#
+export ARCH_FLAGS=armv8.2-a+fp16+rcpc+dotprod+crypto
+
+# The GNU triplet toolchain for cross-compiling to the specified architecture.
+# These are specifically "debian multiarch tuples" per https://wiki.debian.org/Multiarch/Tuples
+export TOOLCHAIN=aarch64-linux-gnu
+
+# Valid openssl targets are defined in openssl/Configurations/10-main.conf.
+export OPENSSL_TARGET=linux-aarch64
+
