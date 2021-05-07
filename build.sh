@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -eu
 
 export OPENSSL_VERSION=1.1.1k
 export OPENSSL_SHA256=892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5
@@ -16,7 +16,9 @@ export LUA_VERSION=5.4.2
 export LUA_MD5=49c92d6a49faba342c35c52e1ac3f81e
 
 BASE=aasmith/haproxy
-MANIFEST_NAME=$BASE:$HAPROXY_VERSION
+MANIFEST_NAME=$BASE:$IMAGE_TAG
+
+echo "Preparing manifest '$MANIFEST_NAME'"
 
 # Build images that require cross-compliation
 
@@ -26,11 +28,11 @@ for buildspec in buildspec.*; do
   source "$buildspec"
   set +o allexport
 
-  echo "Building $buildspec..."
+  IMAGE_NAME=$BASE:$IMAGE_TAG-$ARCH$VARIANT
 
-  IMAGE_NAME=$BASE:$HAPROXY_VERSION-$ARCH$VARIANT
+  echo "Building $buildspec as '$IMAGE_NAME'..."
 
-  docker build -f Dockerfile.multiarch -t $IMAGE_NAME \
+  docker build -f Dockerfile.multiarch -t "$IMAGE_NAME" \
     --build-arg OPENSSL_VERSION \
     --build-arg OPENSSL_SHA256 \
     --build-arg PCRE2_VERSION \
@@ -46,19 +48,21 @@ for buildspec in buildspec.*; do
     --build-arg OPENSSL_TARGET \
     .
 
-  docker push $IMAGE_NAME
-  docker manifest create $MANIFEST_NAME --amend $IMAGE_NAME
-  docker manifest annotate --arch=$ARCH --variant=$VARIANT $MANIFEST_NAME $IMAGE_NAME
-  docker manifest inspect $MANIFEST_NAME
+  docker push "$IMAGE_NAME"
+  docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
+  docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
+  docker manifest inspect "$MANIFEST_NAME"
 
 done
 
 # Build "native" amd64 image
 
 ARCH=amd64
-IMAGE_NAME=$BASE:$HAPROXY_VERSION-$ARCH
+IMAGE_NAME=$BASE:$IMAGE_TAG-$ARCH
 
-docker build -f Dockerfile -t $IMAGE_NAME \
+echo "Building '$IMAGE_NAME'..."
+
+docker build -f Dockerfile -t "$IMAGE_NAME" \
   --build-arg OPENSSL_VERSION \
   --build-arg OPENSSL_SHA256 \
   --build-arg PCRE2_VERSION \
@@ -70,13 +74,13 @@ docker build -f Dockerfile -t $IMAGE_NAME \
   --build-arg HAPROXY_SHA256 \
   .
 
-docker push $IMAGE_NAME
-docker manifest create $MANIFEST_NAME --amend $IMAGE_NAME
-docker manifest annotate --arch=$ARCH $MANIFEST_NAME $IMAGE_NAME
-docker manifest inspect $MANIFEST_NAME
+docker push "$IMAGE_NAME"
+docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
+docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
+docker manifest inspect "$MANIFEST_NAME"
 
 # Push the complete manifest
 
-docker manifest push $MANIFEST_NAME
-docker manifest inspect --verbose $MANIFEST_NAME
+docker manifest push "$MANIFEST_NAME"
+docker manifest inspect --verbose "$MANIFEST_NAME"
 
