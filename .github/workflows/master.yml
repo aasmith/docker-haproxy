@@ -25,4 +25,4 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Build
-        run: IMAGE_TAG=latest build.sh
+        run: IMAGE_TAG=latest ./build.sh
