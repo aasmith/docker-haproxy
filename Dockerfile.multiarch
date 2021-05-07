@@ -34,6 +34,10 @@ RUN dpkg --add-architecture "${ARCH}" && \
 
 FROM --platform=linux/amd64 builder as ssl
 
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
+
 ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
 ARG OPENSSL_TARGET
@@ -52,6 +56,10 @@ RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz &&
 
 FROM --platform=linux/amd64 builder as pcre2
 
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
+
 ARG PCRE2_VERSION
 ARG PCRE2_SHA256
 
@@ -66,6 +74,10 @@ RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
 # Lua
 
 FROM builder as lua
+
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
 ARG LUA_VERSION
 ARG LUA_MD5
@@ -87,6 +99,10 @@ FROM --platform=linux/amd64 builder as haproxy
 COPY --from=ssl   /tmp/openssl /tmp/openssl
 COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
 COPY --from=lua   /tmp/lua     /tmp/lua
+
+ARG ARCH
+ARG TOOLCHAIN
+ARG ARCH_FLAGS
 
 ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
