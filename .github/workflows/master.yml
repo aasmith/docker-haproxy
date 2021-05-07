@@ -1,4 +1,4 @@
-name: Build and push new version
+name: Build and push latest version
 
 on:
   push:
