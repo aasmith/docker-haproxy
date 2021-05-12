@@ -32,7 +32,7 @@ for buildspec in buildspec.*; do
 
   echo "Building $buildspec as '$IMAGE_NAME'..."
 
-  docker build -f Dockerfile.multiarch -t "$IMAGE_NAME" \
+  docker buildx build -f Dockerfile.multiarch -t "$IMAGE_NAME" \
     --build-arg OPENSSL_VERSION \
     --build-arg OPENSSL_SHA256 \
     --build-arg PCRE2_VERSION \
@@ -62,7 +62,7 @@ IMAGE_NAME=$BASE:$IMAGE_TAG-$ARCH
 
 echo "Building '$IMAGE_NAME'..."
 
-docker build -f Dockerfile -t "$IMAGE_NAME" \
+docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
   --build-arg OPENSSL_VERSION \
   --build-arg OPENSSL_SHA256 \
   --build-arg PCRE2_VERSION \
