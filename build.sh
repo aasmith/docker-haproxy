@@ -46,9 +46,9 @@ for buildspec in buildspec.*; do
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
     --build-arg OPENSSL_TARGET \
+    --push \
     .
 
-  docker push "$IMAGE_NAME"
   docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
   docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
   docker manifest inspect "$MANIFEST_NAME"
@@ -72,9 +72,9 @@ docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
   --build-arg HAPROXY_MAJOR \
   --build-arg HAPROXY_VERSION \
   --build-arg HAPROXY_SHA256 \
+  --push \
   .
 
-docker push "$IMAGE_NAME"
 docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
 docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
 docker manifest inspect "$MANIFEST_NAME"
