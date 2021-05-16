@@ -2,7 +2,7 @@ name: Build and push latest version
 
 on:
   push:
-    branch:
+    branches:
       - master
     tags-ignore:
       - "*"
