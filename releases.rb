@@ -5,7 +5,7 @@
 HAPROXY_GIT_URL = "http://git.haproxy.org/git/haproxy-%s.git"
 
 # Supported versions per the table on the haproxy.org homepage
-HAPROXY_MAJOR_VERSIONS = %w(1.8 2.0 2.1 2.2 2.3)
+HAPROXY_MAJOR_VERSIONS = %w(1.8 2.0 2.1 2.2 2.3 2.4)
 
 # HAProxy versions we have built.
 HAPROXY_BUILDS = %x(git tag).split
