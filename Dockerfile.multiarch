@@ -1,4 +1,4 @@
-ARG OS=debian:bullseye-slim
+ARG OS=
 
 ARG ARCH=
 ARG TOOLCHAIN=

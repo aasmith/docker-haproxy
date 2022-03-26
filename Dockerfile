@@ -1,4 +1,4 @@
-ARG OS=debian:buster-slim
+ARG OS=
 
 ARG OPENSSL_VERSION=
 ARG OPENSSL_SHA256=
