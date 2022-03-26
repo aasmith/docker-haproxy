@@ -36,7 +36,7 @@ FROM builder as ssl
 ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
 
-RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
+RUN curl -OJL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
     echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
     cd openssl-${OPENSSL_VERSION} && \
@@ -53,7 +53,7 @@ FROM builder as pcre2
 ARG PCRE2_VERSION
 ARG PCRE2_SHA256
 
-RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
+RUN curl -OJL "https://github.com/PhilipHazel/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz" && \
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
@@ -71,7 +71,7 @@ FROM builder as lua
 ARG LUA_VERSION
 ARG LUA_MD5
 
-RUN curl -OJ "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
+RUN curl -OJL "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
     echo "${LUA_MD5} lua-${LUA_VERSION}.tar.gz" | md5sum -c && \
     tar zxf lua-${LUA_VERSION}.tar.gz && \
     cd lua-${LUA_VERSION} && \
