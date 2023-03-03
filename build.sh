@@ -64,6 +64,7 @@ for buildspec in buildspec.*; do
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
     --build-arg OPENSSL_TARGET \
+    --provenance=false \
     --$ACTION \
     .
 
@@ -103,6 +104,7 @@ docker buildx build --no-cache -f Dockerfile -t "$IMAGE_NAME" \
   --build-arg HAPROXY_MAJOR \
   --build-arg HAPROXY_VERSION \
   --build-arg HAPROXY_SHA256 \
+  --provenance=false \
   --$ACTION \
   .
 
