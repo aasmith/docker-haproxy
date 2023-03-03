@@ -76,6 +76,8 @@ for buildspec in buildspec.*; do
     echo "Annotate manifest"
     docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
     echo $?
+    echo "inspecting manifest"
+    docker manifest inspect "$MANIFEST_NAME"
     echo "done manifesting"
   fi
 
@@ -107,9 +109,11 @@ docker buildx build --no-cache -f Dockerfile -t "$IMAGE_NAME" \
 if [ -n "$REALBUILD" ]; then
   docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
   docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
+  docker manifest inspect "$MANIFEST_NAME"
 
   # Push the complete manifest
 
   docker manifest push "$MANIFEST_NAME"
+  docker manifest inspect --verbose "$MANIFEST_NAME"
 fi
 
