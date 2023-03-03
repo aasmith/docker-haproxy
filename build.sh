@@ -16,6 +16,22 @@ export HAPROXY_SHA256=0895340b36b704a1dbb25fea3bbaee5ff606399d6943486ebd7f256fee
 export LUA_VERSION=5.4.4
 export LUA_MD5=bd8ce7069ff99a400efd14cf339a727b
 
+# If not running in CI, then this won't be a real build that gets pushed
+if [ -z "${CI-}" ]; then
+  REALBUILD=
+else
+  REALBUILD=1
+fi
+
+if [ -n "$REALBUILD" ]; then
+  echo "Real build, will be pushed to dockerhub."
+  ACTION=push
+else
+  echo "Internal testing build"
+  IMAGE_TAG=test
+  ACTION=load
+fi
+
 BASE=aasmith/haproxy
 MANIFEST_NAME=$BASE:$IMAGE_TAG
 
@@ -48,14 +64,19 @@ for buildspec in buildspec.*; do
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
     --build-arg OPENSSL_TARGET \
-    --push \
+    --provenance=false \
+    --$ACTION \
     .
 
-  docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
-  docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
-  docker manifest inspect "$MANIFEST_NAME"
+  if [ -n "$REALBUILD" ]; then
+    docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
+    docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
+    docker manifest inspect "$MANIFEST_NAME"
+  fi
 
 done
+
+echo "building native"
 
 # Build "native" amd64 image
 
@@ -64,7 +85,7 @@ IMAGE_NAME=$BASE:$IMAGE_TAG-$ARCH
 
 echo "Building '$IMAGE_NAME'..."
 
-docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
+docker buildx build --no-cache -f Dockerfile -t "$IMAGE_NAME" \
   --build-arg OS \
   --build-arg OPENSSL_VERSION \
   --build-arg OPENSSL_SHA256 \
@@ -75,15 +96,18 @@ docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
   --build-arg HAPROXY_MAJOR \
   --build-arg HAPROXY_VERSION \
   --build-arg HAPROXY_SHA256 \
-  --push \
+  --provenance=false \
+  --$ACTION \
   .
 
-docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
-docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
-docker manifest inspect "$MANIFEST_NAME"
+if [ -n "$REALBUILD" ]; then
+  docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
+  docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
+  docker manifest inspect "$MANIFEST_NAME"
 
-# Push the complete manifest
+  # Push the complete manifest
 
-docker manifest push "$MANIFEST_NAME"
-docker manifest inspect --verbose "$MANIFEST_NAME"
+  docker manifest push "$MANIFEST_NAME"
+  docker manifest inspect --verbose "$MANIFEST_NAME"
+fi
 
