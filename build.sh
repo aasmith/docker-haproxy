@@ -67,12 +67,21 @@ for buildspec in buildspec.*; do
     --$ACTION \
     .
 
+  echo "completed buildx"
+
   if [ -n "$REALBUILD" ]; then
+    echo "Create manifest"
     docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
+    echo $?
+    echo "Annotate manifest"
     docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
+    echo $?
+    echo "done manifesting"
   fi
 
 done
+
+echo "building native"
 
 # Build "native" amd64 image
 
