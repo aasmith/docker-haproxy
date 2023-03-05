@@ -13,20 +13,12 @@ ARG HAPROXY_SHA256=
 ARG LUA_VERSION=
 ARG LUA_MD5=
 
-### Runtime -- the base image for all others
-
-FROM $OS as runtime
-
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y curl ca-certificates
-
-
 ### Builder -- adds common utils needed for all build images
 
-FROM runtime as builder
+FROM $OS as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl libreadline-dev
+    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev
 
 
 ### OpenSSL
@@ -112,7 +104,10 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
 
 ### HAProxy runtime image
 
-FROM runtime
+FROM --platform=linux/amd64 $OS as runtime
+
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y curl ca-certificates
 
 COPY --from=haproxy /tmp/haproxy /usr/local/
 
