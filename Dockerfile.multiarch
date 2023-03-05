@@ -46,7 +46,7 @@ RUN curl -OJL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz &
     echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
     cd openssl-${OPENSSL_VERSION} && \
-    ./Configure ${OPENSSL_TARGET} CROSS_COMPILE=/usr/bin/${TOOLCHAIN}- CC=gcc-10 \
+    ./Configure ${OPENSSL_TARGET} --cross-compile-prefix=/usr/bin/${TOOLCHAIN}- CC=gcc-10 \
              -march=${ARCH_FLAGS} enable-ec_nistp_64_gcc_128 \
              no-shared --prefix=/tmp/openssl --openssldir=/tmp/openssl && \
     make && \
