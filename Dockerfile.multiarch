@@ -28,7 +28,7 @@ ARG ARCH_FLAGS
 RUN dpkg --add-architecture "${ARCH}" && \
     apt-get update && \
     apt-get install --no-install-recommends -y \
-            gcc-10-${TOOLCHAIN} libc6-dev-${ARCH}-cross make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev:${ARCH}
+            gcc-10-${TOOLCHAIN} libc6-dev-${ARCH}-cross make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev:${ARCH} patch
 
 ### OpenSSL
 
@@ -101,6 +101,7 @@ COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
 COPY --from=lua   /tmp/lua     /tmp/lua
 
 ARG ARCH
+ARG VARIANT
 ARG TOOLCHAIN
 ARG ARCH_FLAGS
 
@@ -108,9 +109,13 @@ ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
 ARG HAPROXY_SHA256
 
+COPY patches.${ARCH}${VARIANT} /tmp/patches.${ARCH}${VARIANT}
+
 RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
     echo "${HAPROXY_SHA256} haproxy-${HAPROXY_VERSION}.tar.gz" | sha256sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
+    ls -la /tmp/patches.arm64v8 && \
+    patch -t -d haproxy-${HAPROXY_VERSION} -p1 -i /tmp/patches.${ARCH}${VARIANT}/* && \
     make -C haproxy-${HAPROXY_VERSION} \
       TARGET=linux-glibc \
       ARCH_FLAGS="-march=${ARCH_FLAGS}" \
