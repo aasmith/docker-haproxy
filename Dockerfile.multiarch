@@ -1,4 +1,4 @@
-ARG OS=debian:bullseye-slim
+ARG OS=
 
 ARG ARCH=
 ARG TOOLCHAIN=
@@ -28,7 +28,7 @@ ARG ARCH_FLAGS
 RUN dpkg --add-architecture "${ARCH}" && \
     apt-get update && \
     apt-get install --no-install-recommends -y \
-            gcc-10-${TOOLCHAIN} libc6-dev-${ARCH}-cross make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev:${ARCH}
+            gcc-10-${TOOLCHAIN} libc6-dev-${ARCH}-cross make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev:${ARCH} patch
 
 ### OpenSSL
 
@@ -42,11 +42,11 @@ ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
 ARG OPENSSL_TARGET
 
-RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
+RUN curl -OJL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
     echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
     cd openssl-${OPENSSL_VERSION} && \
-    ./Configure ${OPENSSL_TARGET} CROSS_COMPILE=/usr/bin/${TOOLCHAIN}- CC=gcc-10 \
+    ./Configure ${OPENSSL_TARGET} --cross-compile-prefix=/usr/bin/${TOOLCHAIN}- CC=gcc-10 \
              -march=${ARCH_FLAGS} enable-ec_nistp_64_gcc_128 \
              no-shared --prefix=/tmp/openssl --openssldir=/tmp/openssl && \
     make && \
@@ -63,7 +63,7 @@ ARG ARCH_FLAGS
 ARG PCRE2_VERSION
 ARG PCRE2_SHA256
 
-RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
+RUN curl -OJL "https://github.com/PhilipHazel/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz" && \
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
@@ -82,7 +82,7 @@ ARG ARCH_FLAGS
 ARG LUA_VERSION
 ARG LUA_MD5
 
-RUN curl -OJ "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
+RUN curl -OJL "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
     echo "${LUA_MD5} lua-${LUA_VERSION}.tar.gz" | md5sum -c && \
     tar zxf lua-${LUA_VERSION}.tar.gz && \
     cd lua-${LUA_VERSION} && \
@@ -101,6 +101,7 @@ COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
 COPY --from=lua   /tmp/lua     /tmp/lua
 
 ARG ARCH
+ARG VARIANT
 ARG TOOLCHAIN
 ARG ARCH_FLAGS
 
@@ -108,9 +109,13 @@ ARG HAPROXY_MAJOR
 ARG HAPROXY_VERSION
 ARG HAPROXY_SHA256
 
+COPY patches.${ARCH}${VARIANT} /tmp/patches.${ARCH}${VARIANT}
+
 RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
     echo "${HAPROXY_SHA256} haproxy-${HAPROXY_VERSION}.tar.gz" | sha256sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
+    ls -la /tmp/patches.arm64v8 && \
+    patch -t -d haproxy-${HAPROXY_VERSION} -p1 -i /tmp/patches.${ARCH}${VARIANT}/* && \
     make -C haproxy-${HAPROXY_VERSION} \
       TARGET=linux-glibc \
       ARCH_FLAGS="-march=${ARCH_FLAGS}" \

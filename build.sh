@@ -2,18 +2,35 @@
 
 set -eu
 
-export OPENSSL_VERSION=1.1.1k
-export OPENSSL_SHA256=892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5
+export OS=debian:bullseye-slim
+export OPENSSL_VERSION=3.0.8
+export OPENSSL_SHA256=6c13d2bf38fdf31eac3ce2a347073673f5d63263398f1f69d0df4a41253e4b3e
 
-export PCRE2_VERSION=10.36
-export PCRE2_SHA256=b95ddb9414f91a967a887d69617059fb672b914f56fa3d613812c1ee8e8a1a37
+export PCRE2_VERSION=10.42
+export PCRE2_SHA256=c33b418e3b936ee3153de2c61cc638e7e4fe3156022a5c77d0711bcbb9d64f1f
 
-export HAPROXY_MAJOR=2.4
-export HAPROXY_VERSION=2.4.0
-export HAPROXY_SHA256=0a6962adaf5a1291db87e3eb4ddf906a72fed535dbd2255b164b7d8394a53640
+export HAPROXY_MAJOR=2.6
+export HAPROXY_VERSION=2.6.9
+export HAPROXY_SHA256=f01a1c5f465dc1b5cd175d0b28b98beb4dfe82b5b5b63ddcc68d1df433641701
 
-export LUA_VERSION=5.4.3
-export LUA_MD5=ef63ed2ecfb713646a7fcc583cf5f352
+export LUA_VERSION=5.4.4
+export LUA_MD5=bd8ce7069ff99a400efd14cf339a727b
+
+# If not running in CI, then this won't be a real build that gets pushed
+if [ -z "${CI-}" ]; then
+  REALBUILD=
+else
+  REALBUILD=1
+fi
+
+if [ -n "$REALBUILD" ]; then
+  echo "Real build, will be pushed to dockerhub."
+  ACTION=push
+else
+  echo "Internal testing build"
+  IMAGE_TAG=test
+  ACTION=load
+fi
 
 BASE=aasmith/haproxy
 MANIFEST_NAME=$BASE:$IMAGE_TAG
@@ -33,6 +50,7 @@ for buildspec in buildspec.*; do
   echo "Building $buildspec as '$IMAGE_NAME'..."
 
   docker buildx build -f Dockerfile.multiarch -t "$IMAGE_NAME" \
+    --build-arg OS \
     --build-arg OPENSSL_VERSION \
     --build-arg OPENSSL_SHA256 \
     --build-arg PCRE2_VERSION \
@@ -43,17 +61,23 @@ for buildspec in buildspec.*; do
     --build-arg HAPROXY_VERSION \
     --build-arg HAPROXY_SHA256 \
     --build-arg ARCH \
+    --build-arg VARIANT \
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
     --build-arg OPENSSL_TARGET \
-    --push \
+    --provenance=false \
+    --$ACTION \
     .
 
-  docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
-  docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
-  docker manifest inspect "$MANIFEST_NAME"
+  if [ -n "$REALBUILD" ]; then
+    docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
+    docker manifest annotate --arch="$ARCH" --variant="$VARIANT" "$MANIFEST_NAME" "$IMAGE_NAME"
+    docker manifest inspect "$MANIFEST_NAME"
+  fi
 
 done
+
+echo "building native"
 
 # Build "native" amd64 image
 
@@ -63,6 +87,7 @@ IMAGE_NAME=$BASE:$IMAGE_TAG-$ARCH
 echo "Building '$IMAGE_NAME'..."
 
 docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
+  --build-arg OS \
   --build-arg OPENSSL_VERSION \
   --build-arg OPENSSL_SHA256 \
   --build-arg PCRE2_VERSION \
@@ -72,15 +97,18 @@ docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
   --build-arg HAPROXY_MAJOR \
   --build-arg HAPROXY_VERSION \
   --build-arg HAPROXY_SHA256 \
-  --push \
+  --provenance=false \
+  --$ACTION \
   .
 
-docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
-docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
-docker manifest inspect "$MANIFEST_NAME"
+if [ -n "$REALBUILD" ]; then
+  docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
+  docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
+  docker manifest inspect "$MANIFEST_NAME"
 
-# Push the complete manifest
+  # Push the complete manifest
 
-docker manifest push "$MANIFEST_NAME"
-docker manifest inspect --verbose "$MANIFEST_NAME"
+  docker manifest push "$MANIFEST_NAME"
+  docker manifest inspect --verbose "$MANIFEST_NAME"
+fi
 

@@ -1,4 +1,4 @@
-ARG OS=debian:buster-slim
+ARG OS=
 
 ARG OPENSSL_VERSION=
 ARG OPENSSL_SHA256=
@@ -13,20 +13,12 @@ ARG HAPROXY_SHA256=
 ARG LUA_VERSION=
 ARG LUA_MD5=
 
-### Runtime -- the base image for all others
-
-FROM $OS as runtime
-
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y curl ca-certificates
-
-
 ### Builder -- adds common utils needed for all build images
 
-FROM runtime as builder
+FROM $OS as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl libreadline-dev
+    apt-get install --no-install-recommends -y gcc make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev
 
 
 ### OpenSSL
@@ -36,7 +28,7 @@ FROM builder as ssl
 ARG OPENSSL_VERSION
 ARG OPENSSL_SHA256
 
-RUN curl -OJ https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
+RUN curl -OJL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz && \
     echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
     cd openssl-${OPENSSL_VERSION} && \
@@ -53,7 +45,7 @@ FROM builder as pcre2
 ARG PCRE2_VERSION
 ARG PCRE2_SHA256
 
-RUN curl -OJ "https://ftp.pcre.org/pub/pcre/pcre2-${PCRE2_VERSION}.tar.gz" && \
+RUN curl -OJL "https://github.com/PhilipHazel/pcre2/releases/download/pcre2-${PCRE2_VERSION}/pcre2-${PCRE2_VERSION}.tar.gz" && \
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
@@ -71,7 +63,7 @@ FROM builder as lua
 ARG LUA_VERSION
 ARG LUA_MD5
 
-RUN curl -OJ "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
+RUN curl -OJL "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
     echo "${LUA_MD5} lua-${LUA_VERSION}.tar.gz" | md5sum -c && \
     tar zxf lua-${LUA_VERSION}.tar.gz && \
     cd lua-${LUA_VERSION} && \
@@ -100,7 +92,7 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
       TARGET=linux-glibc ARCH=x86_64 \
       USE_SLZ=1 \
       USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
-      USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
+      USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib64 \
       USE_LUA=1 \
       USE_PROMEX=1 \
       DESTDIR=/tmp/haproxy PREFIX= \
@@ -112,7 +104,10 @@ RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HA
 
 ### HAProxy runtime image
 
-FROM runtime
+FROM --platform=linux/amd64 $OS as runtime
+
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y curl ca-certificates
 
 COPY --from=haproxy /tmp/haproxy /usr/local/
 
