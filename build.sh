@@ -61,7 +61,6 @@ for buildspec in buildspec.*; do
     --build-arg HAPROXY_VERSION \
     --build-arg HAPROXY_SHA256 \
     --build-arg ARCH \
-    --build-arg VARIANT \
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
     --build-arg OPENSSL_TARGET \
