@@ -1,0 +1,23 @@
+# Target architecture in docker parlance. This is essentially $GOARCH, per the
+# manifest spec at https://docs.docker.com/registry/spec/manifest-v2-2/
+#
+# The "linux/" OS prefix is assumed.
+#
+export ARCH=amd64
+
+# The advertised variant that will be used in the manifest.
+export VARIANT=
+
+# Generic x86-64
+#
+# https://gcc.gnu.org/onlinedocs/gcc/x86-Options.html
+export ARCH_FLAGS=x86-64
+
+# The GNU triplet toolchain for cross-compiling to the specified architecture.
+# These are specifically "debian multiarch tuples" per https://wiki.debian.org/Multiarch/Tuples
+export TOOLCHAIN=x86-64-linux-gnu
+export TOOLCHAIN_PREFIX=x86_64-linux-gnu
+
+# Valid openssl targets are defined in openssl/Configurations/10-main.conf.
+export OPENSSL_TARGET=linux-x86_64
+

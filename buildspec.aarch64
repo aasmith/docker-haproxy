@@ -22,6 +22,7 @@ export ARCH_FLAGS=armv8.2-a+fp16+rcpc+dotprod+crypto
 # The GNU triplet toolchain for cross-compiling to the specified architecture.
 # These are specifically "debian multiarch tuples" per https://wiki.debian.org/Multiarch/Tuples
 export TOOLCHAIN=aarch64-linux-gnu
+export TOOLCHAIN_PREFIX=aarch64-linux-gnu
 
 # Valid openssl targets are defined in openssl/Configurations/10-main.conf.
 export OPENSSL_TARGET=linux-aarch64

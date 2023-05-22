@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -eu
+shopt -s extglob
 
 export OS=debian:bullseye-slim
 export OPENSSL_VERSION=3.0.8
@@ -39,7 +40,24 @@ echo "Preparing manifest '$MANIFEST_NAME'"
 
 # Build images that require cross-compliation
 
-for buildspec in buildspec.*; do
+echo "Builder is an $(uname -m)"
+
+case "$(uname -m)" in
+	arm64)
+		CROSS_SPECS=buildspec.!(aarch64)
+		NATIVE_DOCKER_ARCH=arm64
+		;;
+	x86_64)
+		CROSS_SPECS=buildspec.!(x86_64)
+		NATIVE_DOCKER_ARCH=amd64
+		;;
+	*)
+		echo "unknown arch"
+		exit 1
+		;;
+esac
+
+for buildspec in $CROSS_SPECS; do
 
   set -o allexport
   source "$buildspec"
@@ -63,6 +81,7 @@ for buildspec in buildspec.*; do
     --build-arg ARCH \
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
+    --build-arg TOOLCHAIN_PREFIX \
     --build-arg OPENSSL_TARGET \
     --provenance=false \
     --$ACTION \
@@ -78,14 +97,11 @@ done
 
 echo "building native"
 
-# Build "native" amd64 image
-
-ARCH=amd64
-IMAGE_NAME=$BASE:$IMAGE_TAG-$ARCH
+IMAGE_NAME=$BASE:$IMAGE_TAG-$NATIVE_DOCKER_ARCH
 
 echo "Building '$IMAGE_NAME'..."
 
-docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
+docker buildx build -f Dockerfile.native -t "$IMAGE_NAME" \
   --build-arg OS \
   --build-arg OPENSSL_VERSION \
   --build-arg OPENSSL_SHA256 \
@@ -102,7 +118,7 @@ docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
 
 if [ -n "$REALBUILD" ]; then
   docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
-  docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
+  docker manifest annotate --arch=$NATIVE_DOCKER_ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
   docker manifest inspect "$MANIFEST_NAME"
 
   # Push the complete manifest
