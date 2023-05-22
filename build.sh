@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ $# != 3 ]; then
+    >&2 echo "usage: $0 <major> <version> <sha256>"
+    exit 1
+fi
+
 set -eu
 shopt -s extglob
 
@@ -10,9 +15,10 @@ export OPENSSL_SHA256=6c13d2bf38fdf31eac3ce2a347073673f5d63263398f1f69d0df4a4125
 export PCRE2_VERSION=10.42
 export PCRE2_SHA256=c33b418e3b936ee3153de2c61cc638e7e4fe3156022a5c77d0711bcbb9d64f1f
 
-export HAPROXY_MAJOR=2.6
-export HAPROXY_VERSION=2.6.9
-export HAPROXY_SHA256=f01a1c5f465dc1b5cd175d0b28b98beb4dfe82b5b5b63ddcc68d1df433641701
+# See the 'current-version' file for values used for the current build and to reproduce.
+export HAPROXY_MAJOR=$1
+export HAPROXY_VERSION=$2
+export HAPROXY_SHA256=$3
 
 export LUA_VERSION=5.4.4
 export LUA_MD5=bd8ce7069ff99a400efd14cf339a727b
