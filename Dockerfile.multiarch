@@ -2,6 +2,7 @@ ARG OS=
 
 ARG ARCH=
 ARG TOOLCHAIN=
+ARG TOOLCHAIN_PREFIX=
 ARG OPENSSL_TARGET=
 
 ARG OPENSSL_VERSION=
@@ -17,9 +18,9 @@ ARG HAPROXY_SHA256=
 ARG LUA_VERSION=
 ARG LUA_MD5=
 
-# Build using cross-compilation, with amd64 as the build arch and $ARCH as the host
+# Build using cross-compilation, using $TOOLCHAIN to target $ARCH
 
-FROM --platform=linux/amd64 $OS as builder
+FROM $OS as builder
 
 ARG ARCH
 ARG TOOLCHAIN
@@ -28,14 +29,17 @@ ARG ARCH_FLAGS
 RUN dpkg --add-architecture "${ARCH}" && \
     apt-get update && \
     apt-get install --no-install-recommends -y \
-            gcc-10-${TOOLCHAIN} libc6-dev-${ARCH}-cross make file libc6-dev perl libtext-template-perl libreadline-dev curl ca-certificates libcrypt-dev:${ARCH} patch
+            gcc-10-${TOOLCHAIN} libc6-dev-${ARCH}-cross make file libc6-dev perl libtext-template-perl \
+            libreadline-dev curl ca-certificates libcrypt-dev:${ARCH} gcc-10 binutils-${TOOLCHAIN} binutils \
+            patch
 
 ### OpenSSL
 
-FROM --platform=linux/amd64 builder as ssl
+FROM builder as ssl
 
 ARG ARCH
 ARG TOOLCHAIN
+ARG TOOLCHAIN_PREFIX
 ARG ARCH_FLAGS
 
 ARG OPENSSL_VERSION
@@ -46,18 +50,19 @@ RUN curl -OJL https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz &
     echo ${OPENSSL_SHA256} openssl-${OPENSSL_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf openssl-${OPENSSL_VERSION}.tar.gz && \
     cd openssl-${OPENSSL_VERSION} && \
-    ./Configure ${OPENSSL_TARGET} --cross-compile-prefix=/usr/bin/${TOOLCHAIN}- CC=gcc-10 \
+    ./Configure ${OPENSSL_TARGET} --cross-compile-prefix=/usr/bin/${TOOLCHAIN_PREFIX}- CC=gcc-10 \
              -march=${ARCH_FLAGS} enable-ec_nistp_64_gcc_128 \
-             no-shared --prefix=/tmp/openssl --openssldir=/tmp/openssl && \
+             no-shared --prefix=/tmp/openssl --openssldir=/tmp/openssl --libdir=lib && \
     make && \
     make install_sw
 
 ### PCRE2
 
-FROM --platform=linux/amd64 builder as pcre2
+FROM builder as pcre2
 
 ARG ARCH
 ARG TOOLCHAIN
+ARG TOOLCHAIN_PREFIX
 ARG ARCH_FLAGS
 
 ARG PCRE2_VERSION
@@ -67,7 +72,7 @@ RUN curl -OJL "https://github.com/PhilipHazel/pcre2/releases/download/pcre2-${PC
     echo ${PCRE2_SHA256} pcre2-${PCRE2_VERSION}.tar.gz | sha256sum -c && \
     tar zxvf pcre2-${PCRE2_VERSION}.tar.gz && \
     cd pcre2-${PCRE2_VERSION} && \
-    CC=/usr/bin/${TOOLCHAIN}-gcc-10 CFLAGS="-O3 -march=${ARCH_FLAGS} -g" \
+    CC=/usr/bin/${TOOLCHAIN_PREFIX}-gcc-10 CFLAGS="-O3 -march=${ARCH_FLAGS} -g" \
     ./configure --prefix=/tmp/pcre2 --disable-shared --enable-jit --host=${TOOLCHAIN} && \
     make install
 
@@ -77,6 +82,7 @@ FROM builder as lua
 
 ARG ARCH
 ARG TOOLCHAIN
+ARG TOOLCHAIN_PREFIX
 ARG ARCH_FLAGS
 
 ARG LUA_VERSION
@@ -86,15 +92,15 @@ RUN curl -OJL "http://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz" && \
     echo "${LUA_MD5} lua-${LUA_VERSION}.tar.gz" | md5sum -c && \
     tar zxf lua-${LUA_VERSION}.tar.gz && \
     cd lua-${LUA_VERSION} && \
-    make CC="/usr/bin/${TOOLCHAIN}-gcc-10" \
+    make CC="/usr/bin/${TOOLCHAIN_PREFIX}-gcc-10" \
          MYCFLAGS="-march=${ARCH_FLAGS} -g" \
-         AR="/usr/bin/${TOOLCHAIN}-ar rcu" \
-         RANLIB=/usr/bin/${TOOLCHAIN}-ranlib && \
+         AR="/usr/bin/${TOOLCHAIN_PREFIX}-ar rcu" \
+         RANLIB=/usr/bin/${TOOLCHAIN_PREFIX}-ranlib && \
     make install INSTALL_TOP=/tmp/lua
 
 ### HAProxy
 
-FROM --platform=linux/amd64 builder as haproxy
+FROM builder as haproxy
 
 COPY --from=ssl   /tmp/openssl /tmp/openssl
 COPY --from=pcre2 /tmp/pcre2   /tmp/pcre2
@@ -103,6 +109,7 @@ COPY --from=lua   /tmp/lua     /tmp/lua
 ARG ARCH
 ARG VARIANT
 ARG TOOLCHAIN
+ARG TOOLCHAIN_PREFIX
 ARG ARCH_FLAGS
 
 ARG HAPROXY_MAJOR
@@ -114,12 +121,12 @@ COPY patches.${ARCH}${VARIANT} /tmp/patches.${ARCH}${VARIANT}
 RUN curl -OJL "http://www.haproxy.org/download/${HAPROXY_MAJOR}/src/haproxy-${HAPROXY_VERSION}.tar.gz" && \
     echo "${HAPROXY_SHA256} haproxy-${HAPROXY_VERSION}.tar.gz" | sha256sum -c && \
     tar zxvf haproxy-${HAPROXY_VERSION}.tar.gz && \
-    ls -la /tmp/patches.arm64v8 && \
+    ls -la /tmp/patches.${ARCH}${VARIANT} && \
     patch -t -d haproxy-${HAPROXY_VERSION} -p1 -i /tmp/patches.${ARCH}${VARIANT}/* && \
     make -C haproxy-${HAPROXY_VERSION} \
       TARGET=linux-glibc \
       ARCH_FLAGS="-march=${ARCH_FLAGS}" \
-      CC=/usr/bin/${TOOLCHAIN}-gcc-10 \
+      CC=/usr/bin/${TOOLCHAIN_PREFIX}-gcc-10 \
       USE_SLZ=1 \
       USE_STATIC_PCRE2=1 USE_PCRE2_JIT=1 PCRE2DIR=/tmp/pcre2 \
       USE_OPENSSL=1 SSL_INC=/tmp/openssl/include SSL_LIB=/tmp/openssl/lib \
