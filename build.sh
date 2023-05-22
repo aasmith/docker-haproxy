@@ -1,6 +1,12 @@
 #!/bin/bash
 
+if [ $# != 3 ]; then
+    >&2 echo "usage: $0 <major> <version> <sha256>"
+    exit 1
+fi
+
 set -eu
+shopt -s extglob
 
 export OS=debian:bullseye-slim
 export OPENSSL_VERSION=3.0.8
@@ -9,9 +15,10 @@ export OPENSSL_SHA256=6c13d2bf38fdf31eac3ce2a347073673f5d63263398f1f69d0df4a4125
 export PCRE2_VERSION=10.42
 export PCRE2_SHA256=c33b418e3b936ee3153de2c61cc638e7e4fe3156022a5c77d0711bcbb9d64f1f
 
-export HAPROXY_MAJOR=2.6
-export HAPROXY_VERSION=2.6.9
-export HAPROXY_SHA256=f01a1c5f465dc1b5cd175d0b28b98beb4dfe82b5b5b63ddcc68d1df433641701
+# See the 'current-version' file for values used for the current build and to reproduce.
+export HAPROXY_MAJOR=$1
+export HAPROXY_VERSION=$2
+export HAPROXY_SHA256=$3
 
 export LUA_VERSION=5.4.4
 export LUA_MD5=bd8ce7069ff99a400efd14cf339a727b
@@ -39,7 +46,24 @@ echo "Preparing manifest '$MANIFEST_NAME'"
 
 # Build images that require cross-compliation
 
-for buildspec in buildspec.*; do
+echo "Builder is an $(uname -m)"
+
+case "$(uname -m)" in
+	arm64)
+		CROSS_SPECS=buildspec.!(aarch64)
+		NATIVE_DOCKER_ARCH=arm64
+		;;
+	x86_64)
+		CROSS_SPECS=buildspec.!(x86_64)
+		NATIVE_DOCKER_ARCH=amd64
+		;;
+	*)
+		echo "unknown arch"
+		exit 1
+		;;
+esac
+
+for buildspec in $CROSS_SPECS; do
 
   set -o allexport
   source "$buildspec"
@@ -61,9 +85,9 @@ for buildspec in buildspec.*; do
     --build-arg HAPROXY_VERSION \
     --build-arg HAPROXY_SHA256 \
     --build-arg ARCH \
-    --build-arg VARIANT \
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
+    --build-arg TOOLCHAIN_PREFIX \
     --build-arg OPENSSL_TARGET \
     --provenance=false \
     --$ACTION \
@@ -79,14 +103,11 @@ done
 
 echo "building native"
 
-# Build "native" amd64 image
-
-ARCH=amd64
-IMAGE_NAME=$BASE:$IMAGE_TAG-$ARCH
+IMAGE_NAME=$BASE:$IMAGE_TAG-$NATIVE_DOCKER_ARCH
 
 echo "Building '$IMAGE_NAME'..."
 
-docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
+docker buildx build -f Dockerfile.native -t "$IMAGE_NAME" \
   --build-arg OS \
   --build-arg OPENSSL_VERSION \
   --build-arg OPENSSL_SHA256 \
@@ -103,7 +124,7 @@ docker buildx build -f Dockerfile -t "$IMAGE_NAME" \
 
 if [ -n "$REALBUILD" ]; then
   docker manifest create "$MANIFEST_NAME" --amend "$IMAGE_NAME"
-  docker manifest annotate --arch=$ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
+  docker manifest annotate --arch=$NATIVE_DOCKER_ARCH "$MANIFEST_NAME" "$IMAGE_NAME"
   docker manifest inspect "$MANIFEST_NAME"
 
   # Push the complete manifest
