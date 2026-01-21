@@ -8,20 +8,20 @@ fi
 set -eu
 shopt -s extglob
 
-export OS=debian:bullseye-slim
-export OPENSSL_VERSION=3.0.8
-export OPENSSL_SHA256=6c13d2bf38fdf31eac3ce2a347073673f5d63263398f1f69d0df4a41253e4b3e
+export OS=debian:bookworm-slim
+export AWS_LC_VERSION=v1.66.2
+export AWS_LC_SHA256=d64a46b4f75fa5362da412f1e96ff5b77eed76b3a95685651f81a558c5c9e126
 
-export PCRE2_VERSION=10.42
-export PCRE2_SHA256=c33b418e3b936ee3153de2c61cc638e7e4fe3156022a5c77d0711bcbb9d64f1f
+export PCRE2_VERSION=10.47
+export PCRE2_SHA256=c08ae2388ef333e8403e670ad70c0a11f1eed021fd88308d7e02f596fcd9dc16
 
 # See the 'current-version' file for values used for the current build and to reproduce.
 export HAPROXY_MAJOR=$1
 export HAPROXY_VERSION=$2
 export HAPROXY_SHA256=$3
 
-export LUA_VERSION=5.4.4
-export LUA_MD5=bd8ce7069ff99a400efd14cf339a727b
+export LUA_VERSION=5.4.7
+export LUA_MD5=fc3f3291353bbe6ee6dec85ee61331e8
 
 # If not running in CI, then this won't be a real build that gets pushed
 if [ -z "${CI-}" ]; then
@@ -75,8 +75,8 @@ for buildspec in $CROSS_SPECS; do
 
   docker buildx build -f Dockerfile.multiarch -t "$IMAGE_NAME" \
     --build-arg OS \
-    --build-arg OPENSSL_VERSION \
-    --build-arg OPENSSL_SHA256 \
+    --build-arg AWS_LC_VERSION \
+    --build-arg AWS_LC_SHA256 \
     --build-arg PCRE2_VERSION \
     --build-arg PCRE2_SHA256 \
     --build-arg LUA_VERSION \
@@ -88,7 +88,6 @@ for buildspec in $CROSS_SPECS; do
     --build-arg ARCH_FLAGS \
     --build-arg TOOLCHAIN \
     --build-arg TOOLCHAIN_PREFIX \
-    --build-arg OPENSSL_TARGET \
     --provenance=false \
     --$ACTION \
     .
@@ -109,8 +108,8 @@ echo "Building '$IMAGE_NAME'..."
 
 docker buildx build -f Dockerfile.native -t "$IMAGE_NAME" \
   --build-arg OS \
-  --build-arg OPENSSL_VERSION \
-  --build-arg OPENSSL_SHA256 \
+  --build-arg AWS_LC_VERSION \
+  --build-arg AWS_LC_SHA256 \
   --build-arg PCRE2_VERSION \
   --build-arg PCRE2_SHA256 \
   --build-arg LUA_VERSION \
